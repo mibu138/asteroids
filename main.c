@@ -1,14 +1,18 @@
+#include "d_init.h"
 #include "r_init.h"
-#include <vulkan/vulkan_core.h>
 #include <stdio.h>
 #include <assert.h>
+#include <unistd.h>
 
 
 int main(int argc, char *argv[])
 {
+    d_Init();
     r_Init();
 
-    r_CleanUp();
+    sleep(2);
 
+    d_CleanUp();
+    r_CleanUp();
     return 0;
 }
