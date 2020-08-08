@@ -12,7 +12,6 @@ int main(int argc, char *argv[])
     r_Init();
 
     Frame* frame = r_RequestFrame();
-    printf("Acquired frame. Image: 0x%016lX Index: %d\n", (unsigned long)*frame->pImage, frame->index);
 
     VkResult r;
     VkCommandBufferBeginInfo cbbi = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
@@ -36,7 +35,6 @@ int main(int argc, char *argv[])
     assert ( VK_SUCCESS == r );
 
     r_PresentFrame();
-    printf("Presented\n");
 
     sleep(1);
 
@@ -54,31 +52,9 @@ int main(int argc, char *argv[])
     assert ( VK_SUCCESS == r );
 
     r_PresentFrame();
-    printf("Presented\n");
 
     sleep(1);
 
-    printf("Lets go to epilepsy mode now.\n");
-    sleep(1);
-    printf("3...\n");
-    sleep(1);
-    printf("2...\n");
-    sleep(1);
-    printf("1...\n");
-    sleep(1);
-
-    int dur = 1000000;
-    for (int i = 0; i < 1000; i++) 
-    {
-        frame = r_RequestFrame();
-        r_PresentFrame();
-        usleep(dur);
-        dur /= 1.1;
-        if (i == 10) printf("Warming up.\n");
-        if (i == 100) printf("Gettin steamy.\n");
-        if (i == 500) printf("Are you feelin it now, Mr. Krabs?\n");
-    }
-     
     vkDeviceWaitIdle(device);
 
     d_CleanUp();

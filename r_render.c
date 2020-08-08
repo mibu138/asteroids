@@ -40,7 +40,7 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData)
 {
-    printf("%s\n", pCallbackData->pMessage);
+    V1_PRINT("%s\n", pCallbackData->pMessage);
     return VK_FALSE; // application must return false;
 }
 
@@ -51,7 +51,7 @@ static uint32_t getVkVersion(void)
     uint32_t major = VK_VERSION_MAJOR(v);
     uint32_t minor = VK_VERSION_MINOR(v);
     uint32_t patch = VK_VERSION_PATCH(v);
-    printf("Vulkan Version: %d.%d.%d\n", major, minor, patch);
+    V1_PRINT("Vulkan Version: %d.%d.%d\n", major, minor, patch);
     return v;
 }
 
@@ -61,7 +61,7 @@ static void inspectAvailableLayers(void)
     vkEnumerateInstanceLayerProperties(&availableCount, NULL);
     VkLayerProperties propertiesAvailable[availableCount];
     vkEnumerateInstanceLayerProperties(&availableCount, propertiesAvailable);
-    printf("%s\n", "Vulkan Instance layers available:");
+    V1_PRINT("%s\n", "Vulkan Instance layers available:");
     const int padding = 90;
     for (int i = 0; i < padding; i++) {
         putchar('-');   
@@ -71,7 +71,7 @@ static void inspectAvailableLayers(void)
         const char* name = propertiesAvailable[i].layerName;
         const char* desc = propertiesAvailable[i].description;
         const int pad = padding - strlen(name);
-        printf("%s%*s\n", name, pad, desc );
+        V1_PRINT("%s%*s\n", name, pad, desc );
         for (int i = 0; i < padding; i++) {
             putchar('-');   
         }
@@ -86,9 +86,9 @@ static void inspectAvailableExtensions(void)
     vkEnumerateInstanceExtensionProperties(NULL, &availableCount, NULL);
     VkExtensionProperties propertiesAvailable[availableCount];
     vkEnumerateInstanceExtensionProperties(NULL, &availableCount, propertiesAvailable);
-    printf("%s\n", "Vulkan Instance extensions available:");
+    V1_PRINT("%s\n", "Vulkan Instance extensions available:");
     for (int i = 0; i < availableCount; i++) {
-        printf("%s\n", propertiesAvailable[i].extensionName);
+        V1_PRINT("%s\n", propertiesAvailable[i].extensionName);
     }
     putchar('\n');
 }
@@ -108,14 +108,14 @@ static void initVkInstance(void)
         .apiVersion = vulkver,
     };
 
-#if VERBOSE > 0
+#if VERBOSE > 1
     inspectAvailableLayers();
     inspectAvailableExtensions();
 #endif
 
     // one for best practices
     // second one is interesting, sounds like it allows
-    // printf to be called from shaders.
+    // V1_PRINT to be called from shaders.
     const VkValidationFeatureEnableEXT valfeatures[] = {
         VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
 //        VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT,
@@ -151,7 +151,7 @@ static void initVkInstance(void)
 
     VkResult result = vkCreateInstance(&instanceInfo, NULL, &instance);
     assert(result == VK_SUCCESS);
-    printf("Successfully initialized Vulkan instance.\n");
+    V1_PRINT("Successfully initialized Vulkan instance.\n");
 }
 
 static void initDebugMessenger(void)
@@ -193,14 +193,14 @@ static VkPhysicalDevice retrievePhysicalDevice(void)
     r = vkEnumeratePhysicalDevices(instance, &physdevcount, devices);
     assert(r == VK_SUCCESS);
     VkPhysicalDeviceProperties props[physdevcount];
-    printf("Physical device count: %d\n", physdevcount);
-    printf("Physical device names:\n");
+    V1_PRINT("Physical device count: %d\n", physdevcount);
+    V1_PRINT("Physical device names:\n");
     for (int i = 0; i < physdevcount; i++) 
     {
         vkGetPhysicalDeviceProperties(devices[i], &props[i]);
-        printf("%s\n", props[i].deviceName);
+        V1_PRINT("%s\n", props[i].deviceName);
     }
-    printf("Selecting Device: %s\n", props[0].deviceName);
+    V1_PRINT("Selecting Device: %s\n", props[0].deviceName);
     return devices[0];
 }
 
@@ -219,11 +219,11 @@ static void initDevice(void)
     for (int i = 0; i < qfcount; i++) 
     {
         VkQueryControlFlags flags = qfprops[i].queueFlags;
-        printf("Queue Family %d: count: %d flags: ", i, qfprops[i].queueCount);
-        if (flags & VK_QUEUE_GRAPHICS_BIT)  printf(" Graphics ");
-        if (flags & VK_QUEUE_COMPUTE_BIT)   printf(" Compute ");
-        if (flags & VK_QUEUE_TRANSFER_BIT)  printf(" Tranfer ");
-        printf("\n");
+        V1_PRINT("Queue Family %d: count: %d flags: ", i, qfprops[i].queueCount);
+        if (flags & VK_QUEUE_GRAPHICS_BIT)  V1_PRINT(" Graphics ");
+        if (flags & VK_QUEUE_COMPUTE_BIT)   V1_PRINT(" Compute ");
+        if (flags & VK_QUEUE_TRANSFER_BIT)  V1_PRINT(" Tranfer ");
+        V1_PRINT("\n");
     }
 
     graphicsQueueFamilyIndex = 0; // because we know this
@@ -248,10 +248,10 @@ static void initDevice(void)
     assert(r == VK_SUCCESS);
 
 #if VERBOSE > 1
-    printf("Device Extensions available: \n");
+    V1_PRINT("Device Extensions available: \n");
     for (int i = 0; i < propCount; i++) 
     {
-        printf("Name: %s    Spec Version: %d\n", properties[i].extensionName, properties[i].specVersion);    
+        V1_PRINT("Name: %s    Spec Version: %d\n", properties[i].extensionName, properties[i].specVersion);    
     }
 #endif
 
@@ -269,7 +269,7 @@ static void initDevice(void)
 
     r = vkCreateDevice(physicalDevice, &dci, NULL, &device);
     assert(r == VK_SUCCESS);
-    printf("Device created successfully.\n");
+    V1_PRINT("Device created successfully.\n");
 }
 
 static void initSurface(void)
@@ -282,7 +282,7 @@ static void initSurface(void)
 
     VkResult r = vkCreateXcbSurfaceKHR(instance, &ci, NULL, &surface);
     assert(r == VK_SUCCESS);
-    printf("Surface created successfully.\n");
+    V1_PRINT("Surface created successfully.\n");
 }
 
 static void initSwapchain(void)
@@ -301,9 +301,9 @@ static void initSwapchain(void)
     VkSurfaceFormatKHR surfaceFormats[formatsCount];
     vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatsCount, surfaceFormats);
 
-    printf("Surface formats: \n");
+    V1_PRINT("Surface formats: \n");
     for (int i = 0; i < formatsCount; i++) {
-        printf("Format: %d   Colorspace: %d\n", surfaceFormats[i].format, surfaceFormats[i].colorSpace);
+        V1_PRINT("Format: %d   Colorspace: %d\n", surfaceFormats[i].format, surfaceFormats[i].colorSpace);
     }
 
     uint32_t presentModeCount;
@@ -314,7 +314,7 @@ static void initSwapchain(void)
     const VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR; // i already know its supported 
 
     assert(capabilities.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-    printf("Surface Capabilities: Min swapchain image count: %d\n", capabilities.minImageCount);
+    V1_PRINT("Surface Capabilities: Min swapchain image count: %d\n", capabilities.minImageCount);
 
     const VkSwapchainCreateInfoKHR ci = {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
@@ -351,7 +351,7 @@ static void initSwapchain(void)
         r = vkCreateSemaphore(device, &semaCi, NULL, &imageAcquiredSemaphores[i]);
     }
 
-    printf("Swapchain created successfully.\n");
+    V1_PRINT("Swapchain created successfully.\n");
 }
 
 static void initFrames(void)
@@ -416,7 +416,7 @@ static void initFrames(void)
         r = vkCreateImageView(device, &imageViewInfo, NULL, &frames[i].imageView);
         assert( VK_SUCCESS == r );
     }
-    printf("Frames successfully initialized.\n");
+    V1_PRINT("Frames successfully initialized.\n");
 }
 
 static void initQueues(void)
