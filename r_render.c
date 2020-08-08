@@ -1,5 +1,6 @@
-#include "r_init.h"
-#include "d_init.h"
+#include "def.h"
+#include "r_render.h"
+#include "d_display.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
@@ -8,14 +9,31 @@
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_xcb.h>
 
+#define FRAME_COUNT 2
+#define G_QUEUE_COUNT 4
 
 static VkInstance       instance;
-static VkDebugUtilsMessengerEXT debugMessenger;
 static VkPhysicalDevice physicalDevice;
 static VkSurfaceKHR     surface;
 static VkSwapchainKHR   swapchain;
 
+static VkDebugUtilsMessengerEXT debugMessenger;
+
 VkDevice device;
+
+static uint32_t graphicsQueueFamilyIndex = UINT32_MAX; //hopefully this causes obvious errors
+static VkQueue  graphicsQueues[G_QUEUE_COUNT];
+static VkQueue  presentQueue;
+
+static Frame         frames[FRAME_COUNT];
+static VkSemaphore   imageAcquiredSemaphores[FRAME_COUNT];
+static VkImage       swapchainImages[FRAME_COUNT];
+static uint64_t      frameCounter = 0;
+static uint32_t      curFrameIndex = 0;
+
+static VkRenderPass swapchainRenderPass;
+
+const VkFormat swapFormat = VK_FORMAT_B8G8R8A8_SRGB;
 
 VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageTypes,
@@ -23,7 +41,7 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         void* pUserData)
 {
     printf("%s\n", pCallbackData->pMessage);
-    return VK_FALSE;
+    return VK_FALSE; // application must return false;
 }
 
 static uint32_t getVkVersion(void)
@@ -80,7 +98,7 @@ static void initVkInstance(void)
     uint32_t vulkver = getVkVersion();
 
     const char appName[] =    "Asteroids"; 
-    const char engineName[] =  "Sword";
+    const char engineName[] = "Sword";
 
     const VkApplicationInfo appInfo = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -90,7 +108,7 @@ static void initVkInstance(void)
         .apiVersion = vulkver,
     };
 
-#ifdef VERBOSE
+#if VERBOSE > 0
     inspectAvailableLayers();
     inspectAvailableExtensions();
 #endif
@@ -142,7 +160,9 @@ static void initDebugMessenger(void)
         .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
         .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | 
                            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-//                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+#if VERBOSE > 1
+                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+#endif
                            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT,
         .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
                        VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
@@ -187,7 +207,7 @@ static VkPhysicalDevice retrievePhysicalDevice(void)
 static void initDevice(void)
 {
     physicalDevice = retrievePhysicalDevice();
-
+    VkResult r;
     uint32_t qfcount;
 
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &qfcount, NULL);
@@ -206,16 +226,34 @@ static void initDevice(void)
         printf("\n");
     }
 
-    const float priorities[] = {1.0};
+    graphicsQueueFamilyIndex = 0; // because we know this
+    assert( G_QUEUE_COUNT < qfprops[graphicsQueueFamilyIndex].queueCount );
+
+    const float priorities[G_QUEUE_COUNT] = {1.0, 1.0, 1.0, 1.0};
 
     const VkDeviceQueueCreateInfo qci[] = { 
         { 
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .queueFamilyIndex = 0,
-            .queueCount = 1,
-            .pQueuePriorities = priorities
+            .queueFamilyIndex = graphicsQueueFamilyIndex,
+            .queueCount = G_QUEUE_COUNT,
+            .pQueuePriorities = priorities,
         }
     };
+
+    uint32_t propCount;
+    r = vkEnumerateDeviceExtensionProperties(physicalDevice, NULL, &propCount, NULL);
+    assert(r == VK_SUCCESS);
+    VkExtensionProperties properties[propCount];
+    r = vkEnumerateDeviceExtensionProperties(physicalDevice, NULL, &propCount, properties);
+    assert(r == VK_SUCCESS);
+
+#if VERBOSE > 1
+    printf("Device Extensions available: \n");
+    for (int i = 0; i < propCount; i++) 
+    {
+        printf("Name: %s    Spec Version: %d\n", properties[i].extensionName, properties[i].specVersion);    
+    }
+#endif
 
     const char* extensions[] = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -229,7 +267,7 @@ static void initDevice(void)
         .ppEnabledExtensionNames = extensions
     };
 
-    VkResult r = vkCreateDevice(physicalDevice, &dci, NULL, &device);
+    r = vkCreateDevice(physicalDevice, &dci, NULL, &device);
     assert(r == VK_SUCCESS);
     printf("Device created successfully.\n");
 }
@@ -273,7 +311,7 @@ static void initSwapchain(void)
     VkPresentModeKHR presentModes[presentModeCount];
     vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes);
 
-    const VkPresentModeKHR presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR; // i already know its supported 
+    const VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR; // i already know its supported 
 
     assert(capabilities.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
     printf("Surface Capabilities: Min swapchain image count: %d\n", capabilities.minImageCount);
@@ -282,7 +320,7 @@ static void initSwapchain(void)
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = surface,
         .minImageCount = 2,
-        .imageFormat = VK_FORMAT_B8G8R8A8_SRGB, //50
+        .imageFormat = swapFormat, //50
         .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
         .imageExtent = capabilities.currentExtent,
         .imageArrayLayers = 1, // number of views in a multiview / stereo surface
@@ -297,11 +335,156 @@ static void initSwapchain(void)
         .oldSwapchain = VK_NULL_HANDLE
     };
 
-    printf("Called initSwapchain\n");
-
     r = vkCreateSwapchainKHR(device, &ci, NULL, &swapchain);
-    assert(r == VK_SUCCESS);
+    assert(VK_SUCCESS == r);
+
+    uint32_t imageCount;
+    r = vkGetSwapchainImagesKHR(device, swapchain, &imageCount, NULL);
+    assert(VK_SUCCESS == r);
+    assert(FRAME_COUNT == imageCount);
+    r = vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages);
+    assert(VK_SUCCESS == r);
+
+    for (int i = 0; i < FRAME_COUNT; i++) 
+    {
+        VkSemaphoreCreateInfo semaCi = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+        r = vkCreateSemaphore(device, &semaCi, NULL, &imageAcquiredSemaphores[i]);
+    }
+
     printf("Swapchain created successfully.\n");
+}
+
+static void initFrames(void)
+{
+    VkResult r;
+    const VkCommandPoolCreateInfo cmdPoolCi = {
+        .queueFamilyIndex = graphicsQueueFamilyIndex,
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+    };
+
+    for (int i = 0; i < FRAME_COUNT; i++) 
+    {
+        r = vkCreateCommandPool(device, &cmdPoolCi, NULL, &frames[i].commandPool);
+        assert(r == VK_SUCCESS);
+
+        const VkCommandBufferAllocateInfo allocInfo = {
+            .commandBufferCount = 1,
+            .commandPool = frames[i].commandPool,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO
+        };
+
+        r = vkAllocateCommandBuffers(device, &allocInfo, &frames[i].commandBuffer);
+        // spec states that the last parm is an array of commandBuffers... hoping a pointer
+        // to a single one works just as well
+        assert(VK_SUCCESS == r);
+
+        VkSemaphoreCreateInfo semaCi = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+        };
+
+        r = vkCreateSemaphore(device, &semaCi, NULL, &frames[i].semaphore);
+        assert(VK_SUCCESS == r);
+
+        frames[i].index = i;
+        frames[i].pImage = &swapchainImages[i];
+
+        VkImageSubresourceRange ssr = {
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT
+        };
+
+        VkImageViewCreateInfo imageViewInfo = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .subresourceRange = ssr,
+            .format = swapFormat,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .image = *frames[i].pImage,
+        };
+
+        r = vkCreateImageView(device, &imageViewInfo, NULL, &frames[i].imageView);
+        assert( VK_SUCCESS == r );
+    }
+    printf("Frames successfully initialized.\n");
+}
+
+static void initQueues(void)
+{
+    for (int i = 0; i < G_QUEUE_COUNT; i++) 
+    {
+        vkGetDeviceQueue(device, graphicsQueueFamilyIndex, i, &graphicsQueues[i]);
+    }
+    presentQueue = graphicsQueues[G_QUEUE_COUNT - 1]; // the last queue for whatever reason
+}
+
+static void initRenderPasses(void)
+{
+    const VkAttachmentDescription attachment = {
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        .format = swapFormat,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .samples = VK_SAMPLE_COUNT_1_BIT, // TODO look into what this means
+    };
+
+    const VkAttachmentReference reference = {
+        .attachment = 0,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    };
+
+    const VkSubpassDescription subpass = {
+        .inputAttachmentCount = 0,
+        .preserveAttachmentCount = 0,
+        .colorAttachmentCount = 1,
+        .pColorAttachments    = &reference,
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+    };
+
+//    const VkSubpassDependency dependency = {
+//        .srcSubpass = VK_SUBPASS_EXTERNAL,
+//        .dstSubpass = 0,
+//        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+//        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+//    };
+
+    const VkRenderPassCreateInfo ci = {
+        .subpassCount = 1,
+        .pSubpasses = &subpass,
+        .attachmentCount = 1,
+        .pAttachments = &attachment,
+        .dependencyCount = 0,
+//        .pDependencies = &dependency,
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO
+    };
+
+    VkResult r = vkCreateRenderPass(device, &ci, NULL, &swapchainRenderPass);
+    assert( VK_SUCCESS == r );
+}
+
+static void initFrameBuffers(void)
+{
+    VkResult r;
+    for (int i = 0; i < FRAME_COUNT; i++) 
+    {
+        const VkFramebufferCreateInfo ci = {
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .layers = 1,
+            .renderPass = swapchainRenderPass,
+            .width = WINDOW_WIDTH,
+            .height = WINDOW_HEIGHT,
+            .attachmentCount = 1,
+            .pAttachments = &frames[i].imageView,
+        };
+
+        frames[i].pRenderPass = &swapchainRenderPass;
+
+        r = vkCreateFramebuffer(device, &ci, NULL, &frames[i].frameBuffer);
+        assert( VK_SUCCESS == r );
+    }
 }
 
 void r_Init(void)
@@ -311,6 +494,61 @@ void r_Init(void)
     initDevice();
     initSurface();
     initSwapchain();
+    initQueues();
+    initRenderPasses();
+    initFrames();
+    initFrameBuffers();
+}
+
+Frame* r_RequestFrame(void)
+{
+    VkResult r;
+    uint32_t i = frameCounter % FRAME_COUNT;
+    r = vkAcquireNextImageKHR(device, 
+            swapchain, 
+            UINT64_MAX, 
+            imageAcquiredSemaphores[i], 
+            VK_NULL_HANDLE, 
+            &curFrameIndex);
+    assert(VK_SUCCESS == r);
+    frameCounter++;
+    return &frames[curFrameIndex];
+}
+
+void r_PresentFrame(void)
+{
+    VkPipelineStageFlags stageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+    VkSubmitInfo si = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pWaitDstStageMask = &stageFlags,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &imageAcquiredSemaphores[curFrameIndex],
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &frames[curFrameIndex].semaphore,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &frames[curFrameIndex].commandBuffer,
+    };
+
+    VkResult res;
+    res = vkQueueSubmit(graphicsQueues[0], 1, &si, VK_NULL_HANDLE);
+    assert( VK_SUCCESS == res );
+    printf("Submitted\n");
+
+    VkResult r;
+    const VkPresentInfoKHR info = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .swapchainCount = 1,
+        .pSwapchains = &swapchain,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &frames[curFrameIndex].semaphore,
+        .pResults = &r,
+        .pImageIndices = &curFrameIndex,
+    };
+
+    res = vkQueuePresentKHR(presentQueue, &info);
+    assert( VK_SUCCESS == r );
+    assert( VK_SUCCESS == res );
 }
 
 void r_CleanUp(void)
@@ -318,10 +556,19 @@ void r_CleanUp(void)
     PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)
         vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
         
-    vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, NULL);
+    vkDestroyRenderPass(device, swapchainRenderPass, NULL);
+    for (int i = 0; i < FRAME_COUNT; i++) 
+    {
+        vkDestroyImageView(device, frames[i].imageView, NULL);
+        vkDestroyFramebuffer(device, frames[i].frameBuffer, NULL);
+        vkDestroySemaphore(device, imageAcquiredSemaphores[i], NULL);
+        vkDestroySemaphore(device, frames[i].semaphore, NULL);
+        vkDestroyCommandPool(device, frames[i].commandPool, NULL);
+    }
     vkDestroySwapchainKHR(device, swapchain, NULL);
     vkDestroySurfaceKHR(instance, surface, NULL);
     vkDestroyDevice(device, NULL);
+    vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, NULL);
     vkDestroyInstance(instance, NULL);
 }
 

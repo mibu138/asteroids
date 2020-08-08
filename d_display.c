@@ -1,4 +1,4 @@
-#include "d_init.h"
+#include "d_display.h"
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
 #include <string.h>
