@@ -377,14 +377,22 @@ static void initFrames(void)
         r = vkAllocateCommandBuffers(device, &allocInfo, &frames[i].commandBuffer);
         // spec states that the last parm is an array of commandBuffers... hoping a pointer
         // to a single one works just as well
-        assert(VK_SUCCESS == r);
+        assert( VK_SUCCESS == r );
 
-        VkSemaphoreCreateInfo semaCi = {
+        const VkSemaphoreCreateInfo semaCi = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
         };
 
         r = vkCreateSemaphore(device, &semaCi, NULL, &frames[i].semaphore);
-        assert(VK_SUCCESS == r);
+        assert( VK_SUCCESS == r );
+
+        const VkFenceCreateInfo fenceCi = {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+            .flags = VK_FENCE_CREATE_SIGNALED_BIT
+        };
+
+        r = vkCreateFence(device, &fenceCi, NULL, &frames[i].fence);
+        assert( VK_SUCCESS == r );
 
         frames[i].index = i;
         frames[i].pImage = &swapchainImages[i];
@@ -417,7 +425,7 @@ static void initQueues(void)
     {
         vkGetDeviceQueue(device, graphicsQueueFamilyIndex, i, &graphicsQueues[i]);
     }
-    presentQueue = graphicsQueues[G_QUEUE_COUNT - 1]; // the last queue for whatever reason
+    presentQueue = graphicsQueues[0]; // use the first queue to present
 }
 
 static void initRenderPasses(void)
@@ -444,20 +452,22 @@ static void initRenderPasses(void)
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
     };
 
-//    const VkSubpassDependency dependency = {
-//        .srcSubpass = VK_SUBPASS_EXTERNAL,
-//        .dstSubpass = 0,
-//        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-//        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-//    };
+    const VkSubpassDependency dependency = {
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask = 0,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    };
 
     const VkRenderPassCreateInfo ci = {
         .subpassCount = 1,
         .pSubpasses = &subpass,
         .attachmentCount = 1,
         .pAttachments = &attachment,
-        .dependencyCount = 0,
-//        .pDependencies = &dependency,
+        .dependencyCount = 1,
+        .pDependencies = &dependency,
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO
     };
 
@@ -517,6 +527,8 @@ Frame* r_RequestFrame(void)
 
 void r_PresentFrame(void)
 {
+    VkResult res;
+
     VkPipelineStageFlags stageFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
     VkSubmitInfo si = {
@@ -530,10 +542,11 @@ void r_PresentFrame(void)
         .pCommandBuffers = &frames[curFrameIndex].commandBuffer,
     };
 
-    VkResult res;
-    res = vkQueueSubmit(graphicsQueues[0], 1, &si, VK_NULL_HANDLE);
+    vkWaitForFences(device, 1, &frames[curFrameIndex].fence, VK_TRUE, UINT64_MAX);
+    vkResetFences(device, 1, &frames[curFrameIndex].fence);
+
+    res = vkQueueSubmit(graphicsQueues[0], 1, &si, frames[curFrameIndex].fence);
     assert( VK_SUCCESS == res );
-    printf("Submitted\n");
 
     VkResult r;
     const VkPresentInfoKHR info = {
@@ -559,6 +572,7 @@ void r_CleanUp(void)
     vkDestroyRenderPass(device, swapchainRenderPass, NULL);
     for (int i = 0; i < FRAME_COUNT; i++) 
     {
+        vkDestroyFence(device, frames[i].fence, NULL);
         vkDestroyImageView(device, frames[i].imageView, NULL);
         vkDestroyFramebuffer(device, frames[i].frameBuffer, NULL);
         vkDestroySemaphore(device, imageAcquiredSemaphores[i], NULL);

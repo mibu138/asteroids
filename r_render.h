@@ -12,6 +12,7 @@ typedef struct frame {
     VkCommandPool   commandPool;
     VkCommandBuffer commandBuffer;
     VkSemaphore     semaphore;
+    VkFence         fence;
     VkImage*        pImage;
     VkImageView     imageView;
     VkFramebuffer   frameBuffer;

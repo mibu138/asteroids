@@ -18,9 +18,9 @@ int main(int argc, char *argv[])
     VkCommandBufferBeginInfo cbbi = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     r = vkBeginCommandBuffer(frame->commandBuffer, &cbbi);
 
-    const VkClearValue clearValue = {1.0f, 0.5f, 0.0f, 1.0f};
+    VkClearValue clearValue = {1.0f, 0.5f, 0.0f, 1.0f};
 
-    const VkRenderPassBeginInfo rpassInfo = {
+    VkRenderPassBeginInfo rpassInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .clearValueCount = 1,
         .pClearValues = &clearValue,
@@ -39,6 +39,45 @@ int main(int argc, char *argv[])
     printf("Presented\n");
 
     sleep(1);
+
+    frame = r_RequestFrame();
+
+    vkBeginCommandBuffer(frame->commandBuffer, &cbbi);
+
+    clearValue = (VkClearValue){0.0, 0.5, 1.0, 1.0};
+    rpassInfo.framebuffer = frame->frameBuffer;
+
+    vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdEndRenderPass(frame->commandBuffer);
+
+    r = vkEndCommandBuffer(frame->commandBuffer);
+    assert ( VK_SUCCESS == r );
+
+    r_PresentFrame();
+    printf("Presented\n");
+
+    sleep(1);
+
+    printf("Lets go to epilepsy mode now.\n");
+    sleep(1);
+    printf("3...\n");
+    sleep(1);
+    printf("2...\n");
+    sleep(1);
+    printf("1...\n");
+    sleep(1);
+
+    int dur = 1000000;
+    for (int i = 0; i < 1000; i++) 
+    {
+        frame = r_RequestFrame();
+        r_PresentFrame();
+        usleep(dur);
+        dur /= 1.1;
+        if (i == 10) printf("Warming up.\n");
+        if (i == 100) printf("Gettin steamy.\n");
+        if (i == 500) printf("Are you feelin it now, Mr. Krabs?\n");
+    }
      
     vkDeviceWaitIdle(device);
 
