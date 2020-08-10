@@ -8,16 +8,28 @@ NAME = as
 DEPS =              \
 		d_display.h \
 		r_render.h  \
+		g_game.h    \
+		m_math.h    \
+		w_world.h   \
+		z_memory.h  \
+		utils.h     \
 		def.h
 
 OBJS = 					 \
 		$(O)/d_display.o \
-		$(O)/r_render.o  
+		$(O)/r_render.o  \
+		$(O)/g_game.o    \
+		$(O)/w_world.o   \
+		$(O)/z_memory.o  \
+		$(O)/utils.o
 
-all: $(O)/$(NAME)
+all: $(O)/$(NAME) tags
 
 clean: 
 	rm -f $(O)/*
+
+tags: 
+	ctags .
 
 $(O)/$(NAME): main.c $(OBJS) $(DEPS)
 	$(CC) $(CFLAGS) $(OBJS) $< -o $@ $(LIBS)

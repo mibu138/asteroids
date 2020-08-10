@@ -564,7 +564,7 @@ void r_PresentFrame(void)
     assert( VK_SUCCESS == res );
 }
 
-void r_CleanUp(void)
+void r_Destroy(void)
 {
     PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)
         vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");

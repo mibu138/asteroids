@@ -25,6 +25,6 @@ extern VkDevice device;
 void   r_Init(void);
 Frame* r_RequestFrame(void);
 void   r_PresentFrame(void);
-void   r_CleanUp(void);
+void   r_Destroy(void);
 
 #endif /* end of include guard: R_INIT_H */

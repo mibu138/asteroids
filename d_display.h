@@ -17,6 +17,6 @@ typedef struct xcbWindow {
 extern XcbWindow xcbWindow;
 
 void d_Init(void);
-void d_CleanUp(void);
+void d_Destroy(void);
 
 #endif /* end of include guard: D_INIT_H */

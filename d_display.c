@@ -44,7 +44,7 @@ void d_Init(void)
     xcb_flush(xcbWindow.connection);
 }
 
-void d_CleanUp(void)
+void d_Destroy(void)
 {
     xcb_disconnect(xcbWindow.connection);
 }
