@@ -13,13 +13,13 @@
 #define G_QUEUE_COUNT 4
 
 static VkInstance       instance;
-static VkPhysicalDevice physicalDevice;
 static VkSurfaceKHR     surface;
 static VkSwapchainKHR   swapchain;
 
 static VkDebugUtilsMessengerEXT debugMessenger;
 
 VkDevice device;
+VkPhysicalDevice physicalDevice;
 
 static uint32_t graphicsQueueFamilyIndex = UINT32_MAX; //hopefully this causes obvious errors
 static VkQueue  graphicsQueues[G_QUEUE_COUNT];
@@ -564,7 +564,7 @@ void r_PresentFrame(void)
     assert( VK_SUCCESS == res );
 }
 
-void r_Destroy(void)
+void r_CleanUp(void)
 {
     PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)
         vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");

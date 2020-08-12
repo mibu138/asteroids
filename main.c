@@ -27,10 +27,10 @@ int main(int argc, char *argv[])
 
     vkDeviceWaitIdle(device);
 
-    g_Destroy();
-    w_Destroy();
-    d_Destroy();
-    z_Destroy();
-    r_Destroy();
+    g_CleanUp();
+    w_CleanUp();
+    d_CleanUp();
+    z_CleanUp();
+    r_CleanUp();
     return 0;
 }

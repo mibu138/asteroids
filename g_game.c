@@ -59,7 +59,7 @@ void g_Init(void)
     initPlayer();
 }
 
-void g_Destroy(void)
+void g_CleanUp(void)
 {
 }
 

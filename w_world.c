@@ -43,7 +43,7 @@ void w_Init(void)
     }
 }
 
-void w_Destroy()
+void w_CleanUp()
 {
     for (int i = 0; i < MAX_OBJ; i++) 
     {

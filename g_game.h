@@ -8,6 +8,6 @@ typedef struct player {
 } Player;
 
 void g_Init(void);
-void g_Destroy(void);
+void g_CleanUp(void);
 
 #endif /* end of include guard: G_GAME_H */

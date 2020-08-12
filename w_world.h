@@ -28,6 +28,6 @@ extern World world;
 extern Geo   geos[MAX_OBJ];
 
 void w_Init(void);
-void w_Destroy(void);
+void w_CleanUp(void);
 
 #endif /* end of include guard: W_WORLD_H */

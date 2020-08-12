@@ -21,10 +21,11 @@ typedef struct frame {
 } Frame;
 
 extern VkDevice device;
+extern VkPhysicalDevice physicalDevice;
 
 void   r_Init(void);
 Frame* r_RequestFrame(void);
 void   r_PresentFrame(void);
-void   r_Destroy(void);
+void   r_CleanUp(void);
 
 #endif /* end of include guard: R_INIT_H */
