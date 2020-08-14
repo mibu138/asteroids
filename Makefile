@@ -15,12 +15,13 @@ DEPS =              \
 		utils.h     \
 		def.h
 
-OBJS = 					 \
-		$(O)/d_display.o \
-		$(O)/r_render.o  \
-		$(O)/g_game.o    \
-		$(O)/w_world.o   \
-		$(O)/z_memory.o  \
+OBJS = 					  \
+		$(O)/d_display.o  \
+		$(O)/r_render.o   \
+		$(O)/r_pipeline.o \
+		$(O)/g_game.o     \
+		$(O)/w_world.o    \
+		$(O)/z_memory.o   \
 		$(O)/utils.o
 
 all: $(O)/$(NAME) tags

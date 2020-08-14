@@ -2,12 +2,14 @@
 #define W_WORLD_H
 
 #include "m_math.h"
+#include "z_memory.h"
 
 #define MAX_OBJ 4
 
 typedef struct geo {
-    int   pointCount;
-    Vec2* points;
+    int      pointCount;
+    Vec2*    points;
+    Z_block* pPointBlock;
 } Geo;
 
 typedef struct w_object {

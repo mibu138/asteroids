@@ -5,12 +5,19 @@
 #include <assert.h>
 
 #define MEMORY_SIZE 262144 // minimum size for an allocation on my device (a validation message told me)
-#define BUFFER_SIZE 2048
+#define BUFFER_SIZE 4096
+#define MAX_BLOCKS 256
 
 static VkDeviceMemory hostVisibleCoherentMemory;
 static VkBuffer hostMappedBuffer;
 static VkPhysicalDeviceMemoryProperties memoryProperties;
 static int hostVisibleCoherentIndex;
+static uint8_t hostBuffer[BUFFER_SIZE]; 
+static Z_block blocks[MAX_BLOCKS];
+
+static int blockCount = 0;
+static int bytesAvailable = BUFFER_SIZE;
+static int curBufferOffset = 0;
 
 static void printBufferMemoryReqs(const VkMemoryRequirements* reqs)
 {
@@ -19,6 +26,8 @@ static void printBufferMemoryReqs(const VkMemoryRequirements* reqs)
 
 void z_Init(void)
 {
+    VkResult r;
+
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
 
     V1_PRINT("Memory Heap Info:\n");
@@ -59,16 +68,21 @@ void z_Init(void)
         .memoryTypeIndex = hostVisibleCoherentIndex
     };
 
-    vkAllocateMemory(device, &allocInfo, NULL, &hostVisibleCoherentMemory);
+    r = vkAllocateMemory(device, &allocInfo, NULL, &hostVisibleCoherentMemory);
+    assert( VK_SUCCESS == r );
 
     VkBufferCreateInfo ci = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | 
+                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+                 VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // queue determined by first use
         .size = BUFFER_SIZE
     };
 
-    vkCreateBuffer(device, &ci, NULL, &hostMappedBuffer);
+
+    r = vkCreateBuffer(device, &ci, NULL, &hostMappedBuffer);
+    assert( VK_SUCCESS == r );
 
     VkMemoryRequirements reqs;
     vkGetBufferMemoryRequirements(device, hostMappedBuffer, &reqs);
@@ -76,12 +90,38 @@ void z_Init(void)
     // any buffer created without SPARSITY flags will 
     // support being bound to host visible | host coherent
 
-    vkBindBufferMemory(device, hostMappedBuffer, hostVisibleCoherentMemory, 0);
+    r = vkBindBufferMemory(device, hostMappedBuffer, hostVisibleCoherentMemory, 0);
+    assert( VK_SUCCESS == r );
+
+    r = vkMapMemory(device, hostVisibleCoherentMemory, 0, BUFFER_SIZE, 0, (void**)&hostBuffer);
+    assert( VK_SUCCESS == r );
 }
 
-int z_Alloc(size_t size, bool mappable, Z_block* block)
+Z_block* z_RequestBlock(const size_t size)
 {
-    return Z_FAILURE;
+    assert( size % 4 == 0 ); // only allow for word-sized blocks
+    assert( size < bytesAvailable);
+    assert( blockCount < MAX_BLOCKS );
+    Z_block* pBlock = &blocks[blockCount];
+    pBlock->address = hostBuffer + curBufferOffset;
+    pBlock->vBuffer = &hostMappedBuffer;
+    pBlock->size = size;
+    pBlock->vOffset = curBufferOffset;
+    pBlock->isMapped = true;
+
+    bytesAvailable -= size;
+    curBufferOffset += size;
+    // we really do need to be worrying about alignment here.
+    // anything that is not a multiple of 4 bytes will have issues.
+    // there is VERY GOOD CHANCE that there are other alignment
+    // issues to consider.
+    //
+    // we should probably divide up the buffer into Chunks, where
+    // all the blocks in a chunk contain the same kind of element
+    // (a chunk for vertices, a chunk for indices, a chunk for 
+    // uniform matrices, etc).
+
+    return pBlock;
 }
 
 void z_CleanUp()

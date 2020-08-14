@@ -9,8 +9,8 @@
 
 typedef struct z_block {
     size_t    size;
-    int       offset;
-    void*     address;
+    uint8_t*  address;
+    int       vOffset;
     VkBuffer* vBuffer;
     bool      isMapped;
 } Z_block;
@@ -18,7 +18,7 @@ typedef struct z_block {
 void z_Init(void);
 
 // returns Z_SUCCESS on success, otherwise an error occurred
-int z_Alloc(size_t size, bool mappable, Z_block*);
+Z_block* z_RequestBlock(size_t size);
 
 void z_CleanUp(void);
 

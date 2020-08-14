@@ -1,6 +1,7 @@
 #include "def.h"
 #include "r_render.h"
 #include "d_display.h"
+#include "r_pipeline.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
@@ -508,6 +509,7 @@ void r_Init(void)
     initRenderPasses();
     initFrames();
     initFrameBuffers();
+    initPipelines();
 }
 
 Frame* r_RequestFrame(void)

@@ -40,6 +40,8 @@ static void initFrameCommands(void)
     rpassInfo.framebuffer = frame->frameBuffer;
 
     vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+
     vkCmdEndRenderPass(frame->commandBuffer);
 
     r = vkEndCommandBuffer(frame->commandBuffer);
