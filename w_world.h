@@ -4,15 +4,13 @@
 #include "m_math.h"
 #include "z_memory.h"
 
-#define MAX_OBJ 4
+#define W_MAX_OBJ 16
 
 typedef Vec2 Vertex;
 
 typedef struct geo {
-    int      pointCount;
-    int      pointIndex;
-    Vec2*    points;
-    Z_block* pPointBlock;
+    int      vertCount;
+    int      vertIndex; // index to the first vertex
 } Geo;
 
 typedef struct w_object {
@@ -25,12 +23,15 @@ typedef struct w_object {
 } W_object;
 
 typedef struct world {
-    W_object objects[MAX_OBJ];
+    W_object objects[W_MAX_OBJ];
     int      objectCount;
+    Vertex*  vertexBuffer;
 } World;
 
-extern World world;
-extern Geo   geos[MAX_OBJ];
+extern World    world;
+extern Geo      geos[W_MAX_OBJ];
+extern Z_block* vertexBlock;
+extern Vertex*  vertexBuffer;
 
 void w_Init(void);
 void w_CleanUp(void);

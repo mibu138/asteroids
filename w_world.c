@@ -3,13 +3,20 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#define MAX_VERTS_PER_OBJ 16
+
 World world;
-Geo   geos[MAX_OBJ];
+Geo   geos[W_MAX_OBJ];
+Z_block* vertexBlock;
+Vertex*  vertexBuffer;
 
 void w_Init(void)
 {
-    world.objectCount = 4;
-    assert(world.objectCount <= MAX_OBJ);
+    world.objectCount = 6;
+    vertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ);
+    vertexBuffer = (Vertex*)vertexBlock->address;
+    world.vertexBuffer = vertexBuffer;
+    assert(world.objectCount <= W_MAX_OBJ);
     for (int i = 0; i < world.objectCount; i++) 
     {
         world.objects[i].accel = (Vec2){0.0, 0.0};
@@ -17,40 +24,35 @@ void w_Init(void)
         world.objects[i].pos   = (Vec2){0.5, 0.5};
         world.objects[i].mass  = 1.0;
         world.objects[i].angle = 0.0;
+        geos[i].vertIndex = i * MAX_VERTS_PER_OBJ;
 
-        Z_block* pBlock;
-        Vec2*    points;
-        int   pointCount;
+        Vertex* verts = vertexBuffer + geos[i].vertIndex;
+        int     vertCount;
 
         if (i == 0) //is player
         {
-            pointCount = 3;
-            pBlock = z_RequestBlock(sizeof(Vec2) * pointCount);
-            points = (Vec2*)pBlock->address;
-            points[0] = (Vec2){0.2, 0.2};
-            points[1] = (Vec2){-0.2, 0.2};
-            points[2] = (Vec2){0.0, -0.2};
+            vertCount= 3;
+            verts[0] = (Vec2){0.2, 0.2};
+            verts[1] = (Vec2){-0.2, 0.2};
+            verts[2] = (Vec2){0.0, -0.2};
         }
         else
         {
-            pointCount = 4;
-            pBlock = z_RequestBlock(sizeof(Vec2) * pointCount);
-            points = (Vec2*)pBlock->address;
-            points[0] = (Vec2){0.3, 0.3};
-            points[1] = (Vec2){-0.3, 0.3};
-            points[2] = (Vec2){-0.3, -0.3};
-            points[3] = (Vec2){0.3, -0.3};
+            vertCount = 4;
+            float r = 0.3 + i * 0.05;
+            verts[0] = (Vec2){r, r};
+            verts[1] = (Vec2){-r, r};
+            verts[2] = (Vec2){-r, -r};
+            verts[3] = (Vec2){r, -r};
         }
-        geos[i].pPointBlock = pBlock;
-        geos[i].points = points;
-        geos[i].pointCount = pointCount;
+        geos[i].vertCount    = vertCount;
         world.objects[i].geo = &geos[i];
     }
 }
 
 void w_CleanUp()
 {
-    for (int i = 0; i < MAX_OBJ; i++) 
+    for (int i = 0; i < W_MAX_OBJ; i++) 
     {
         // nothing for now
     }

@@ -6,13 +6,13 @@ void printVec2(const Vec2* vec)
     printf("x: %f, y: %f\n", vec->x, vec->y);
 }
 
-static void printGeo(const Geo* geo)
+static void printGeo(const Geo* geo, const Vertex* buffer)
 {
-    printf("point count: %d\n", geo->pointCount);
-    for (int i = 0; i < geo->pointCount; i++) 
+    printf("Vertex count: %d\n", geo->vertCount);
+    for (int i = 0; i < geo->vertCount; i++) 
     {
-        printf("Point %d: ", i);
-        printVec2(&geo->points[i]);
+        printf("Vertex %d: ", i);
+        printVec2(buffer + geo->vertIndex + i);
     }
 }
 
@@ -33,6 +33,6 @@ void printWorld(const World* world)
         printf("Angle: %f\n", obj->angle);
         printf("Mass:  %f\n", obj->mass);
         printf("Geo:   ");
-        printGeo(obj->geo);
+        printGeo(obj->geo, world->vertexBuffer);
     }
 }
