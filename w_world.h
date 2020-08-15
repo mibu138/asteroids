@@ -6,8 +6,11 @@
 
 #define MAX_OBJ 4
 
+typedef Vec2 Vertex;
+
 typedef struct geo {
     int      pointCount;
+    int      pointIndex;
     Vec2*    points;
     Z_block* pPointBlock;
 } Geo;

@@ -12,7 +12,7 @@ static VkDeviceMemory hostVisibleCoherentMemory;
 static VkBuffer hostMappedBuffer;
 static VkPhysicalDeviceMemoryProperties memoryProperties;
 static int hostVisibleCoherentIndex;
-static uint8_t hostBuffer[BUFFER_SIZE]; 
+uint8_t* hostBuffer;
 static Z_block blocks[MAX_BLOCKS];
 
 static int blockCount = 0;
@@ -111,6 +111,7 @@ Z_block* z_RequestBlock(const size_t size)
 
     bytesAvailable -= size;
     curBufferOffset += size;
+    blockCount++;
     // we really do need to be worrying about alignment here.
     // anything that is not a multiple of 4 bytes will have issues.
     // there is VERY GOOD CHANCE that there are other alignment
@@ -126,6 +127,7 @@ Z_block* z_RequestBlock(const size_t size)
 
 void z_CleanUp()
 {
+    vkUnmapMemory(device, hostVisibleCoherentMemory);
     vkDestroyBuffer(device, hostMappedBuffer, NULL);
     vkFreeMemory(device, hostVisibleCoherentMemory, NULL);
 };

@@ -6,6 +6,7 @@ r_render.c
 
 #define VK_USE_PLATFORM_XCB_KHR
 #define MAX_PIPELINES 1
+#define FRAME_COUNT 2
 
 #include <vulkan/vulkan.h>
 
@@ -24,6 +25,7 @@ typedef struct frame {
 extern VkDevice device;
 extern VkPhysicalDevice physicalDevice;
 extern VkPipeline pipelines[MAX_PIPELINES];
+extern VkRenderPass swapchainRenderPass;
 
 enum r_PipelineType { R_PIPELINE_TYPE_SIMPLE }; // for indexing into the pipelines array
 

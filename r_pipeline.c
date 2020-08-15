@@ -1,5 +1,4 @@
 #include "r_pipeline.h"
-#include "r_render.h"
 #include "m_math.h"
 #include "d_display.h"
 #include <stdio.h>
@@ -7,6 +6,8 @@
 #include <vulkan/vulkan_core.h>
 
 VkPipeline pipelines[MAX_PIPELINES];
+static VkPipelineLayout pipelineLayout;
+static VkDescriptorSetLayout descriptorSetLayout; // no descriptors yet
 
 enum shaderStageType { VERT, FRAG };
 
@@ -55,12 +56,42 @@ static void initShaderModules(VkShaderModule* vertModule, VkShaderModule* fragMo
     assert( VK_SUCCESS == r );
 }
 
-static void initVertexInputState(VkPipelineVertexInputStateCreateInfo* vertexInputState)
+void initDescriptorSets(void)
 {
+    VkResult r;
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = 0,
+        .pBindings = NULL
+    };
+
+    r = vkCreateDescriptorSetLayout(device, &layoutInfo, NULL, &descriptorSetLayout);
+    assert( VK_SUCCESS == r );
+    // no descriptor sets right now
+}
+
+static void initPipelineLayouts(void)
+{
+    VkResult r;
+    const VkPipelineLayoutCreateInfo info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .setLayoutCount = 1, // ?
+        .pSetLayouts = &descriptorSetLayout,
+        .pushConstantRangeCount = 0,
+        .pPushConstantRanges = NULL
+    };
+
+    r = vkCreatePipelineLayout(device, &info, NULL, &pipelineLayout);
+    assert( VK_SUCCESS == r );
 }
 
 void initPipelines(void)
 {
+    initPipelineLayouts();
+
     VkShaderModule vertModule;
     VkShaderModule fragModule;
 
@@ -125,6 +156,7 @@ void initPipelines(void)
     };
 
     const VkPipelineViewportStateCreateInfo viewportState = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .scissorCount = 1,
         .pScissors = &scissor,
         .viewportCount = 1,
@@ -134,9 +166,9 @@ void initPipelines(void)
     const VkPipelineRasterizationStateCreateInfo rasterizationState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .depthClampEnable = VK_FALSE, // dunno
-        .rasterizerDiscardEnable = VK_TRUE, // a guess
+        .rasterizerDiscardEnable = VK_FALSE, // actually discards everything
         .polygonMode = VK_POLYGON_MODE_LINE,
-        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .cullMode = VK_CULL_MODE_NONE,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .depthBiasEnable = VK_FALSE,
         .lineWidth = 1.0
@@ -149,7 +181,39 @@ void initPipelines(void)
         // TODO: alot more settings here. more to look into
     };
 
+    const VkPipelineColorBlendAttachmentState attachmentState = {
+        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | 
+            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, /* need this to actually
+                                                                    write anything to the
+                                                                    framebuffer */
+        .blendEnable = VK_FALSE, // no blending for now
+        .srcColorBlendFactor = 0,
+        .dstColorBlendFactor = 0,
+        .colorBlendOp = 0,
+        .srcAlphaBlendFactor = 0,
+        .dstAlphaBlendFactor = 0,
+        .alphaBlendOp = 0,
+    };
+
+    const VkPipelineColorBlendStateCreateInfo colorBlendState = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .logicOpEnable = VK_FALSE, // only for integer framebuffer formats
+        .logicOp = 0,
+        .attachmentCount = 1,
+        .pAttachments = &attachmentState /* must have independentBlending device   
+            feature enabled for these to be different. each entry would correspond 
+            to the blending for a different framebuffer. */
+    };
+
     const VkGraphicsPipelineCreateInfo pipelineInfo = {
+        .basePipelineIndex = 0, // not used
+        .basePipelineHandle = 0,
+        .subpass = 0, // which subpass in the renderpass do we use this pipeline with
+        .renderPass = swapchainRenderPass,
+        .layout = pipelineLayout,
+        .pDynamicState = NULL,
+        .pColorBlendState = &colorBlendState,
+        .pDepthStencilState = NULL,
         .pMultisampleState = &multisampleState,
         .pRasterizationState = &rasterizationState,
         .pViewportState = &viewportState,
@@ -161,6 +225,20 @@ void initPipelines(void)
         .pVertexInputState = &vertexInput,
         .pInputAssemblyState = &inputAssembly,
     };
-    //vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, pipelines);
-    printf("PLACEHOLDER INITPIPELINES\n");
+
+    vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, pipelines);
+
+    vkDestroyShaderModule(device, vertModule, NULL);
+    vkDestroyShaderModule(device, fragModule, NULL);
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, NULL);
+    vkDestroyPipelineLayout(device, pipelineLayout, NULL);
 }
+
+void cleanUpPipelines()
+{
+    for (int i = 0; i < MAX_PIPELINES; i++) 
+    {
+        vkDestroyPipeline(device, pipelines[i], NULL);
+    }
+}
+

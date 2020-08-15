@@ -10,7 +10,6 @@
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_xcb.h>
 
-#define FRAME_COUNT 2
 #define G_QUEUE_COUNT 4
 
 static VkInstance       instance;
@@ -21,6 +20,7 @@ static VkDebugUtilsMessengerEXT debugMessenger;
 
 VkDevice device;
 VkPhysicalDevice physicalDevice;
+VkRenderPass swapchainRenderPass;
 
 static uint32_t graphicsQueueFamilyIndex = UINT32_MAX; //hopefully this causes obvious errors
 static VkQueue  graphicsQueues[G_QUEUE_COUNT];
@@ -32,9 +32,7 @@ static VkImage       swapchainImages[FRAME_COUNT];
 static uint64_t      frameCounter = 0;
 static uint32_t      curFrameIndex = 0;
 
-static VkRenderPass swapchainRenderPass;
-
-const VkFormat swapFormat = VK_FORMAT_B8G8R8A8_SRGB;
+static const VkFormat swapFormat = VK_FORMAT_B8G8R8A8_SRGB;
 
 VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageTypes,
@@ -260,7 +258,19 @@ static void initDevice(void)
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
+    VkPhysicalDeviceFeatures availableFeatures;
+    vkGetPhysicalDeviceFeatures(physicalDevice, &availableFeatures);
+
+    assert( VK_TRUE == availableFeatures.fillModeNonSolid );
+
+    VkPhysicalDeviceFeatures enabledFeatures = {
+        .fillModeNonSolid = VK_TRUE
+    };
+
     const VkDeviceCreateInfo dci = {
+        .enabledLayerCount = 0,
+        .ppEnabledLayerNames = NULL,
+        .pEnabledFeatures = &enabledFeatures,
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pQueueCreateInfos = qci,
         .queueCreateInfoCount = sizeof(qci) / sizeof(qci[0]),
@@ -509,6 +519,7 @@ void r_Init(void)
     initRenderPasses();
     initFrames();
     initFrameBuffers();
+    initDescriptorSets();
     initPipelines();
 }
 
@@ -571,6 +582,7 @@ void r_CleanUp(void)
     PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)
         vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
         
+    cleanUpPipelines();
     vkDestroyRenderPass(device, swapchainRenderPass, NULL);
     for (int i = 0; i < FRAME_COUNT; i++) 
     {

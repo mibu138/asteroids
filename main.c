@@ -1,4 +1,5 @@
 #include "d_display.h"
+#include "m_math.h"
 #include "r_render.h"
 #include "g_game.h"
 #include "z_memory.h"
@@ -22,8 +23,17 @@ int main(int argc, char *argv[])
     printf("Game initialized.\n");
 
     printWorld(&world);
+    printf("Buffer print:\n");
+    printBuffer(hostBuffer, sizeof(Vec2) * 24, Vec2, printVec2);
 
-    sleep(1);
+    int i = 0;
+    while( i++ < 10 )
+    {
+        r_RequestFrame();
+        r_PresentFrame();
+        printf("Presenting frame\n");
+        sleep(1);
+    }
 
     vkDeviceWaitIdle(device);
 

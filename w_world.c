@@ -36,10 +36,10 @@ void w_Init(void)
             pointCount = 4;
             pBlock = z_RequestBlock(sizeof(Vec2) * pointCount);
             points = (Vec2*)pBlock->address;
-            points[0] = (Vec2){0.2, 0.2};
-            points[1] = (Vec2){-0.2, 0.2};
-            points[2] = (Vec2){-0.2, -0.2};
-            points[3] = (Vec2){0.2, -0.2};
+            points[0] = (Vec2){0.3, 0.3};
+            points[1] = (Vec2){-0.3, 0.3};
+            points[2] = (Vec2){-0.3, -0.3};
+            points[3] = (Vec2){0.3, -0.3};
         }
         geos[i].pPointBlock = pBlock;
         geos[i].points = points;

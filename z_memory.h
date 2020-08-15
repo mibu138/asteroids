@@ -15,6 +15,8 @@ typedef struct z_block {
     bool      isMapped;
 } Z_block;
 
+extern uint8_t* hostBuffer;
+
 void z_Init(void);
 
 // returns Z_SUCCESS on success, otherwise an error occurred

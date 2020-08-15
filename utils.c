@@ -1,7 +1,7 @@
 #include "utils.h"
 #include <stdio.h>
 
-static void printVec2(const Vec2* vec)
+void printVec2(const Vec2* vec)
 {
     printf("x: %f, y: %f\n", vec->x, vec->y);
 }
