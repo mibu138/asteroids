@@ -168,7 +168,7 @@ void initPipelines(void)
         .depthClampEnable = VK_FALSE, // dunno
         .rasterizerDiscardEnable = VK_FALSE, // actually discards everything
         .polygonMode = VK_POLYGON_MODE_LINE,
-        .cullMode = VK_CULL_MODE_NONE,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .depthBiasEnable = VK_FALSE,
         .lineWidth = 1.0

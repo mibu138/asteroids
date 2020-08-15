@@ -12,7 +12,7 @@
     } \
 } ;
 
-void printWorld(const World*);
+void printWorld();
 void printVec2(const Vec2*);
 
 #endif /* end of include guard: UTILS_H */

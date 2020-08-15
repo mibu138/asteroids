@@ -30,18 +30,18 @@ static void initFrameCommands(void)
 
         vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        VkDeviceSize vertBufferOffset = vertexBlock->vOffset; // first element gives us the offset
+        VkDeviceSize vertBufferOffset = w_VertexBlock->vOffset; // first element gives us the offset
 
         assert( 0 == vertBufferOffset ); // should be the offset of the very first vert in the buffer
                                         // which happens to be 0 right now (though does not have to be)
 
         vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[0]);
 
-        vkCmdBindVertexBuffers(frame->commandBuffer, 0, 1, vertexBlock->vBuffer, &vertBufferOffset);
+        vkCmdBindVertexBuffers(frame->commandBuffer, 0, 1, w_VertexBlock->vBuffer, &vertBufferOffset);
 
-        for (int i = 0; i < world.objectCount; i++) 
+        for (int i = 0; i < w_ObjectCount; i++) 
         {
-            vkCmdDraw(frame->commandBuffer, geos[i].vertCount, 1, geos[i].vertIndex, 0);
+            vkCmdDraw(frame->commandBuffer, w_Geos[i].vertCount, 1, w_Geos[i].vertIndex, 0);
         }
 
         vkCmdEndRenderPass(frame->commandBuffer);
@@ -55,7 +55,7 @@ static void initFrameCommands(void)
 
 void initPlayer(void)
 {
-    player.object = &world.objects[0];
+    player.object = &w_Objects[0];
 }
 
 void g_Init(void)

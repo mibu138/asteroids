@@ -20,18 +20,13 @@ typedef struct w_object {
     float angle;
     float mass;
     Geo*  geo;
-} W_object;
+} W_Object;
 
-typedef struct world {
-    W_object objects[W_MAX_OBJ];
-    int      objectCount;
-    Vertex*  vertexBuffer;
-} World;
-
-extern World    world;
-extern Geo      geos[W_MAX_OBJ];
-extern Z_block* vertexBlock;
-extern Vertex*  vertexBuffer;
+extern int      w_ObjectCount;
+extern W_Object w_Objects[W_MAX_OBJ];
+extern Geo      w_Geos[W_MAX_OBJ];
+extern Z_block* w_VertexBlock;
+extern Vertex*  w_VertexBuffer;
 
 void w_Init(void);
 void w_CleanUp(void);

@@ -4,7 +4,7 @@
 #include "w_world.h"
 
 typedef struct player {
-    W_object* object;
+    W_Object* object;
 } Player;
 
 void g_Init(void);

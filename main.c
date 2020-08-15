@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     g_Init();
     printf("Game initialized.\n");
 
-    printWorld(&world);
+    printWorld();
     printf("Buffer print:\n");
     printBuffer(hostBuffer, sizeof(Vec2) * 24, Vec2, printVec2);
 

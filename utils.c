@@ -16,13 +16,13 @@ static void printGeo(const Geo* geo, const Vertex* buffer)
     }
 }
 
-void printWorld(const World* world)
+void printWorld()
 {
     printf("World info:\n");
-    printf("World has %d active objects.\n", world->objectCount);
-    for (int i = 0; i < world->objectCount; i++) 
+    printf("World has %d active objects.\n", w_ObjectCount);
+    for (int i = 0; i < w_ObjectCount; i++) 
     {
-        const W_object* obj = &world->objects[i];
+        const W_Object* obj = &w_Objects[i];
         printf("Object %d:\n", i);
         printf("Pos:   ");
         printVec2(&obj->pos);
@@ -33,6 +33,6 @@ void printWorld(const World* world)
         printf("Angle: %f\n", obj->angle);
         printf("Mass:  %f\n", obj->mass);
         printf("Geo:   ");
-        printGeo(obj->geo, world->vertexBuffer);
+        printGeo(obj->geo, w_VertexBuffer);
     }
 }
