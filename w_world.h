@@ -4,7 +4,7 @@
 #include "m_math.h"
 #include "z_memory.h"
 
-#define W_MAX_OBJ 150
+#define W_MAX_OBJ 32
 
 typedef Vec2 Vertex;
 

@@ -4,9 +4,6 @@
 #include "r_render.h"
 #include <stdbool.h>
 
-#define Z_SUCCESS 1
-#define Z_FAILURE 0
-
 typedef struct z_block {
     size_t    size;
     uint8_t*  address;

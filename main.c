@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     printBuffer(hostBuffer, sizeof(Vec2) * 24, Vec2, printVec2);
 
     int i = 0;
-    while( i++ < 10 )
+    while( 1 ) 
     {
         r_RequestFrame();
         r_PresentFrame();

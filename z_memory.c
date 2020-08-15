@@ -5,7 +5,7 @@
 #include <assert.h>
 
 #define MEMORY_SIZE 262144 // minimum size for an allocation on my device (a validation message told me)
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 16384
 #define MAX_BLOCKS 256
 
 static VkDeviceMemory hostVisibleCoherentMemory;
