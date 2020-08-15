@@ -1,4 +1,5 @@
 #include "w_world.h"
+#include "m_math.h"
 #include "z_memory.h"
 #include <stdlib.h>
 #include <assert.h>
@@ -11,9 +12,17 @@ Geo      w_Geos[W_MAX_OBJ];
 Z_block* w_VertexBlock;
 Vertex*  w_VertexBuffer;
 
+static void rotateGeo(const float angle, Geo* geo)
+{
+    for (int i = 0; i < geo->vertCount; i++) 
+    {
+        m_Rotate(angle, &w_VertexBuffer[geo->vertIndex + i]);
+    }
+}
+
 void w_Init(void)
 {
-    w_ObjectCount = 6;
+    w_ObjectCount = 2;
     w_VertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ);
     w_VertexBuffer = (Vertex*)w_VertexBlock->address;
     w_VertexBuffer = w_VertexBuffer;
@@ -41,7 +50,7 @@ void w_Init(void)
         else
         {
             vertCount = 5;
-            float r = 0.3 + i * 0.05;
+            float r = 0.1;
             verts[0] = (Vec2){r, r};
             verts[1] = (Vec2){-r, r};
             verts[2] = (Vec2){-r, -r};
@@ -50,6 +59,8 @@ void w_Init(void)
         }
         w_Geos[i].vertCount    = vertCount;
         w_Objects[i].geo = &w_Geos[i];
+
+        rotateGeo(i * 0.1, &w_Geos[i]);
     }
 }
 

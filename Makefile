@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g -DVERBOSE=1 
-LIBS = -lvulkan -lxcb
+LIBS = -lvulkan -lxcb -lm
 O = build
 
 NAME = as
@@ -20,6 +20,7 @@ OBJS = 					  \
 		$(O)/r_render.o   \
 		$(O)/r_pipeline.o \
 		$(O)/g_game.o     \
+		$(O)/m_math.o     \
 		$(O)/w_world.o    \
 		$(O)/z_memory.o   \
 		$(O)/utils.o

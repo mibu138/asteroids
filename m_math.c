@@ -1,0 +1,33 @@
+#include "m_math.h"
+#include <math.h>
+
+static void m_Mat2Vec2Mul(const Mat2* m, Vec2* v)
+{
+    v->x = m->x00 * v->x + m->x01 * v->y;
+    v->y = m->x10 * v->x + m->x11 * v->y;
+}
+
+void m_Rotate(const float angle, Vec2* v)
+{
+    Mat2 rot = {
+        .x00 = cos(angle),
+        .x01 = -sin(angle),
+        .x10 = sin(angle),
+        .x11 = cos(angle)
+    };
+    m_Mat2Vec2Mul(&rot, v);
+//    v->x = v->x * cos(angle) - v->y * sin(angle);
+//    v->y = v->x * sin(angle) + v->y * cos(angle);
+}
+
+void m_Translate(const Vec2 t, Vec2* v)
+{
+    v->x += t.x;
+    v->y += t.y;
+}
+
+void m_Scale(const float s, Vec2* v)
+{
+    v->x *= s;
+    v->y *= s;
+}
