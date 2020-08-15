@@ -3,8 +3,9 @@
 
 static void m_Mat2Vec2Mul(const Mat2* m, Vec2* v)
 {
-    v->x = m->x00 * v->x + m->x01 * v->y;
+    float x = m->x00 * v->x + m->x01 * v->y;
     v->y = m->x10 * v->x + m->x11 * v->y;
+    v->x = x;
 }
 
 void m_Rotate(const float angle, Vec2* v)

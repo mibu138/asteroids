@@ -22,7 +22,7 @@ static void rotateGeo(const float angle, Geo* geo)
 
 void w_Init(void)
 {
-    w_ObjectCount = 2;
+    w_ObjectCount = W_MAX_OBJ;
     w_VertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ);
     w_VertexBuffer = (Vertex*)w_VertexBlock->address;
     w_VertexBuffer = w_VertexBuffer;
@@ -50,7 +50,7 @@ void w_Init(void)
         else
         {
             vertCount = 5;
-            float r = 0.1;
+            float r = 0.4 + i * .01;
             verts[0] = (Vec2){r, r};
             verts[1] = (Vec2){-r, r};
             verts[2] = (Vec2){-r, -r};
