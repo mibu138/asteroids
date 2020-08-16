@@ -3,6 +3,7 @@
 #include "r_render.h"
 #include "g_game.h"
 #include "z_memory.h"
+#include "i_input.h"
 #include "utils.h"
 #include <stdio.h>
 #include <assert.h>
@@ -21,14 +22,14 @@ int main(int argc, char *argv[])
     printf("World initialized.\n");
     g_Init();
     printf("Game initialized.\n");
+    i_Init();
+    printf("Input initialized\n");
 
     printWorld();
-    printf("Buffer print:\n");
-    printBuffer(hostBuffer, sizeof(Vec2) * 24, Vec2, printVec2);
 
-    int i = 0;
     while( 1 ) 
     {
+        i_GetEvents();
         r_WaitOnQueueSubmit();
         w_Update();
         r_RequestFrame();

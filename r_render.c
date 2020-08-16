@@ -12,15 +12,15 @@
 
 #define G_QUEUE_COUNT 4
 
+VkDevice device;
+VkPhysicalDevice physicalDevice;
+VkRenderPass swapchainRenderPass;
+
 static VkInstance       instance;
 static VkSurfaceKHR     surface;
 static VkSwapchainKHR   swapchain;
 
 static VkDebugUtilsMessengerEXT debugMessenger;
-
-VkDevice device;
-VkPhysicalDevice physicalDevice;
-VkRenderPass swapchainRenderPass;
 
 static uint32_t graphicsQueueFamilyIndex = UINT32_MAX; //hopefully this causes obvious errors
 static VkQueue  graphicsQueues[G_QUEUE_COUNT];
@@ -287,8 +287,8 @@ static void initSurface(void)
 {
     const VkXcbSurfaceCreateInfoKHR ci = {
         .sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR,
-        .connection = xcbWindow.connection,
-        .window = xcbWindow.window,
+        .connection = d_XcbWindow.connection,
+        .window = d_XcbWindow.window,
     };
 
     VkResult r = vkCreateXcbSurfaceKHR(instance, &ci, NULL, &surface);

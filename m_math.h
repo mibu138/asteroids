@@ -17,5 +17,9 @@ typedef struct mat2 {
 void m_Rotate(const float angle /* radians */, Vec2*);
 void m_Translate(const Vec2 t, Vec2*);
 void m_Scale(const float scale, Vec2*);
+//returns a random float between 0 and 1
+float m_Rand(void); 
+//returns a random float between -1 and 1
+float m_RandNeg(void); 
 
 #endif /* end of include guard: M_MATH_H */

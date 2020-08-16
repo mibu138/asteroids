@@ -8,12 +8,12 @@
 
 typedef Vec2 Vertex;
 
-typedef struct geo {
+typedef struct {
     int      vertCount;
     int      vertIndex; // index to the first vertex
 } Geo;
 
-typedef struct w_object {
+typedef struct {
     Vec2  pos;
     Vec2  vel;
     Vec2  accel;

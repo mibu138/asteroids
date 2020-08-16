@@ -9,12 +9,12 @@ d_display.c
 #define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 800
 
-typedef struct xcbWindow {
+typedef struct {
     xcb_connection_t* connection;
     xcb_window_t      window;
-} XcbWindow;
+} D_XcbWindow;
 
-extern XcbWindow xcbWindow;
+extern D_XcbWindow d_XcbWindow;
 
 void d_Init(void);
 void d_CleanUp(void);

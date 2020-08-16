@@ -1,4 +1,5 @@
 #include "m_math.h"
+#include <stdlib.h>
 #include <math.h>
 
 static void m_Mat2Vec2Mul(const Mat2* m, Vec2* v)
@@ -31,4 +32,15 @@ void m_Scale(const float s, Vec2* v)
 {
     v->x *= s;
     v->y *= s;
+}
+
+float m_Rand(void)
+{
+    return rand() / (float)RAND_MAX;
+}
+
+float m_RandNeg(void)
+{
+    float r = rand() / (float)RAND_MAX;
+    return r * 2 - 1;
 }

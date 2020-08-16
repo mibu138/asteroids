@@ -12,6 +12,7 @@ DEPS =              \
 		m_math.h    \
 		w_world.h   \
 		z_memory.h  \
+		i_input.h   \
 		utils.h     \
 		def.h
 
@@ -23,6 +24,7 @@ OBJS = 					  \
 		$(O)/m_math.o     \
 		$(O)/w_world.o    \
 		$(O)/z_memory.o   \
+		$(O)/i_input.o    \
 		$(O)/utils.o
 
 all: $(O)/$(NAME) tags

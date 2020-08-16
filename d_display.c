@@ -3,17 +3,17 @@
 #include <xcb/xproto.h>
 #include <string.h>
 
-XcbWindow xcbWindow;
+D_XcbWindow d_XcbWindow;
 
 static const char* windowName = "floating";
 
 void d_Init(void)
 {
     int screenNum = 0;
-    xcbWindow.connection =     xcb_connect(NULL, &screenNum);
-    xcbWindow.window     =     xcb_generate_id(xcbWindow.connection);
+    d_XcbWindow.connection =     xcb_connect(NULL, &screenNum);
+    d_XcbWindow.window     =     xcb_generate_id(d_XcbWindow.connection);
 
-    const xcb_setup_t* setup = xcb_get_setup(xcbWindow.connection);
+    const xcb_setup_t* setup = xcb_get_setup(d_XcbWindow.connection);
     xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
 
     for (int i = 0; i < screenNum; i++)
@@ -23,28 +23,40 @@ void d_Init(void)
 
     xcb_screen_t* screen = iter.data;
 
-    xcb_create_window(xcbWindow.connection, 
+    uint32_t values[2];
+    uint32_t mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
+	values[0] = screen->black_pixel;
+	values[1] = XCB_EVENT_MASK_EXPOSURE |
+		XCB_EVENT_MASK_POINTER_MOTION |
+		XCB_EVENT_MASK_ENTER_WINDOW |
+		XCB_EVENT_MASK_KEY_PRESS |
+        XCB_EVENT_MASK_KEY_RELEASE |
+		XCB_EVENT_MASK_LEAVE_WINDOW |
+		XCB_EVENT_MASK_BUTTON_PRESS |
+		XCB_EVENT_MASK_BUTTON_RELEASE;
+
+    xcb_create_window(d_XcbWindow.connection, 
             XCB_COPY_FROM_PARENT,              // depth 
-            xcbWindow.window,                  // window id
+            d_XcbWindow.window,                  // window id
             screen->root,                      // parent
             0, 0,                              // x and y coordinate of new window
             WINDOW_WIDTH, WINDOW_HEIGHT, 
             0,                                 // border wdith 
             XCB_WINDOW_CLASS_COPY_FROM_PARENT, // class 
             XCB_COPY_FROM_PARENT,              // visual 
-            0, NULL);                          // masks (TODO: set to get inputs)
+            mask, values);                          // masks (TODO: set to get inputs)
 
-    xcb_change_property(xcbWindow.connection, 
+    xcb_change_property(d_XcbWindow.connection, 
             XCB_PROP_MODE_REPLACE, 
-            xcbWindow.window, 
+            d_XcbWindow.window, 
             XCB_ATOM_WM_NAME, 
             XCB_ATOM_STRING, 8, strlen(windowName), windowName);
 
-    xcb_map_window(xcbWindow.connection, xcbWindow.window);
-    xcb_flush(xcbWindow.connection);
+    xcb_map_window(d_XcbWindow.connection, d_XcbWindow.window);
+    //xcb_flush(d_XcbWindow.connection);
 }
 
 void d_CleanUp(void)
 {
-    xcb_disconnect(xcbWindow.connection);
+    xcb_disconnect(d_XcbWindow.connection);
 }

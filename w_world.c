@@ -21,40 +21,65 @@ static void rotateGeo(const float angle, Geo* geo)
     }
 }
 
+static void translateGeo(const Vec2 t, Geo* geo)
+{
+    for (int i = 0; i < geo->vertCount; i++) 
+    {
+        m_Translate(t, &w_VertexBuffer[geo->vertIndex + i]);
+    }
+}
+
+static void resetObjectGeo(W_Object* object)
+{
+    const Vec2 t = { -1 * object->pos.x, -1 * object->pos.y };
+    translateGeo(t, object->geo);
+    rotateGeo(-1 * object->angle, object->geo); // reset
+}
+
+static void updateObjectGeo(W_Object* object)
+{
+    rotateGeo(object->angle, object->geo);
+    translateGeo(object->pos, object->geo);
+}
+
 static void updateObject(W_Object* object)
 {
+    resetObjectGeo(object);
     object->angle += object->angVel;
-    rotateGeo(object->angVel, object->geo);
+    updateObjectGeo(object);
 }
 
 void w_Init(void)
 {
-    w_ObjectCount = W_MAX_OBJ;
+    w_ObjectCount = 10;
     w_VertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
     w_VertexBuffer = (Vertex*)w_VertexBlock->address;
     w_VertexBuffer = w_VertexBuffer;
     assert(w_ObjectCount <= W_MAX_OBJ);
     for (int i = 0; i < w_ObjectCount; i++) 
     {
-        float angVel =  0.01 * rand() / (float)RAND_MAX;
+        float angVel =  0.01 * m_Rand();
+        float tx = m_RandNeg();
+        float ty = m_RandNeg();
         w_Objects[i].accel = (Vec2){0.0, 0.0};
         w_Objects[i].vel   = (Vec2){0.0, 0.0};
-        w_Objects[i].pos   = (Vec2){0.5, 0.5};
+        w_Objects[i].pos   = (Vec2){tx, ty};
         w_Objects[i].mass  = 1.0;
-        w_Objects[i].angle = 0.0;
-        w_Objects[i].angVel = angVel;
+        w_Objects[i].angle = i;
         w_Geos[i].vertIndex = i * MAX_VERTS_PER_OBJ;
 
         Vertex* verts = w_VertexBuffer + w_Geos[i].vertIndex;
         int     vertCount;
 
-        if (i == -1) //is player
+        if (i == 0) //is player
         {
             vertCount= 4;
-            verts[0] = (Vec2){0.2, 0.2};
-            verts[1] = (Vec2){-0.2, 0.2};
-            verts[2] = (Vec2){0.0, -0.2};
-            verts[3] = (Vec2){0.2, 0.2};
+            float r = 0.075;
+            verts[0] = (Vec2){0.0, -r};
+            verts[1] = (Vec2){-r/2, r/2};
+            verts[2] = (Vec2){r/2, r/2};
+            verts[3] = (Vec2){0.0, -r};
+            angVel = 0.0;
         }
         else
         {
@@ -66,10 +91,12 @@ void w_Init(void)
             verts[3] = (Vec2){r, -r};
             verts[4] = (Vec2){r, r};
         }
+
+        w_Objects[i].angVel = angVel;
         w_Geos[i].vertCount    = vertCount;
         w_Objects[i].geo = &w_Geos[i];
 
-        rotateGeo(i * 0.1, &w_Geos[i]);
+        updateObjectGeo(&w_Objects[i]);
     }
 }
 
