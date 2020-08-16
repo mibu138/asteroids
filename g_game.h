@@ -10,6 +10,7 @@ typedef struct player {
 
 void g_Init(void);
 void g_Responder(const I_Event* event);
+void g_Update(void);
 void g_RotateAllObjects(void);
 void g_CleanUp(void);
 

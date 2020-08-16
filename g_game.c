@@ -9,6 +9,10 @@ Player player;
 
 static const Vec2 frontDir = {0.0, -1.0};
 
+static bool moveForward;
+static bool turnLeft;
+static bool turnRight;
+
 static void initFrameCommands(void)
 {
     for (int i = 0; i < FRAME_COUNT; i++) 
@@ -72,24 +76,44 @@ void g_Responder(const I_Event* event)
     {
         switch (event->data) 
         {
-            case KEY_W:
-                {
-                Vec2 accel = frontDir;
-                m_Scale(0.05, &accel);
-                m_Rotate(player.object->angle, &accel);
-                m_Add(accel, &player.object->accel);
-                printf("Accelerating...\n");
-                break;
-                }
-            case KEY_A:
-                player.object->angVel -= 0.01;
-                break;
-            case KEY_D:
-                player.object->angVel += 0.01;
-                break;
+            case KEY_W: moveForward = true; break;
+            case KEY_A: turnLeft = true; break;
+            case KEY_D: turnRight = true; break;
             default: return;
         }
     }
+    if (event->type == i_Keyup)
+    {
+        switch (event->data) 
+        {
+            case KEY_W: moveForward = false; break;
+            case KEY_A: turnLeft = false; break;
+            case KEY_D: turnRight = false; break;
+            default: return;
+        }
+    }
+}
+
+void g_Update(void)
+{
+    if (moveForward)
+    {
+        Vec2 accel = frontDir;
+        m_Scale(0.005, &accel);
+        m_Rotate(player.object->angle, &accel);
+        m_Add(accel, &player.object->accel);
+        printf("Accelerating...\n");
+    }
+    if (turnLeft)
+    {
+        player.object->angAccel = -0.01;
+    }
+    else if (turnRight)
+    {
+        player.object->angAccel =  0.01; 
+    }
+    else 
+        player.object->angAccel = 0.0;
 }
 
 void g_CleanUp(void)

@@ -19,6 +19,7 @@ typedef struct {
     Vec2  accel;
     float angle;
     float angVel;
+    float angAccel;
     float mass;
     Geo*  geo;
 } W_Object;

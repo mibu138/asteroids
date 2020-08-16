@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     {
         i_GetEvents();
         i_ProcessEvents();
+        g_Update();
         r_WaitOnQueueSubmit();
         w_Update();
         r_RequestFrame();

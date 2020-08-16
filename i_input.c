@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <xcb/xcb.h>
+#include <xcb/xcb_event.h>
 #include <xcb/xcb_keysyms.h>
 #include <xcb/xcb_util.h>
 #include <X11/keysym.h>
@@ -57,9 +58,17 @@ void i_GetEvents(void)
                 event.data = getKeyCode((xcb_button_press_event_t*)xEvent);
                 break;
             case XCB_KEY_RELEASE: 
+                {
                 event.type = i_Keyup;
                 event.data = getKeyCode((xcb_button_press_event_t*)xEvent);
+                // need to see if this is actually an auto repeat
+                xcb_generic_event_t* next = xcb_poll_for_event(d_XcbWindow.connection);
+                if (next) 
+                    if (XCB_EVENT_RESPONSE_TYPE(next) == XCB_KEY_PRESS && 
+                            getKeyCode((xcb_button_press_event_t*)next) == event.data)
+                        return; //its a repeat
                 break;
+                }
             default: return;
         }
         postEvent(event);

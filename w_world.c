@@ -49,6 +49,7 @@ static void updateObject(W_Object* object)
     m_Add(object->vel, &object->pos);
     m_Scale(0.5, &object->accel);
     m_Scale(0.5, &object->vel);
+    object->angVel += object->angAccel;
     object->angle += object->angVel;
     updateObjectGeo(object);
 }
@@ -65,8 +66,6 @@ void w_Init(void)
         float angVel =  0.01 * m_Rand();
         float tx = m_RandNeg();
         float ty = m_RandNeg();
-        w_Objects[i].accel = (Vec2){0.0, 0.0};
-        w_Objects[i].vel   = (Vec2){0.0, 0.0};
         w_Objects[i].pos   = (Vec2){tx, ty};
         w_Objects[i].mass  = 1.0;
         w_Objects[i].angle = i;
