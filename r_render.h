@@ -30,6 +30,7 @@ extern VkRenderPass swapchainRenderPass;
 enum r_PipelineType { R_PIPELINE_TYPE_SIMPLE }; // for indexing into the pipelines array
 
 void   r_Init(void);
+void   r_WaitOnQueueSubmit(void);
 Frame* r_RequestFrame(void);
 void   r_PresentFrame(void);
 void   r_CleanUp(void);

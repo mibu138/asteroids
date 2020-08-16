@@ -29,10 +29,11 @@ int main(int argc, char *argv[])
     int i = 0;
     while( 1 ) 
     {
+        r_WaitOnQueueSubmit();
+        w_Update();
         r_RequestFrame();
         r_PresentFrame();
-        printf("Presenting frame\n");
-        sleep(1);
+        usleep(30000);
     }
 
     vkDeviceWaitIdle(device);

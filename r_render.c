@@ -523,6 +523,11 @@ void r_Init(void)
     initPipelines();
 }
 
+void r_WaitOnQueueSubmit(void)
+{
+    vkWaitForFences(device, 1, &frames[curFrameIndex].fence, VK_TRUE, UINT64_MAX);
+}
+
 Frame* r_RequestFrame(void)
 {
     VkResult r;
