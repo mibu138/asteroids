@@ -1,11 +1,13 @@
+#include "m_math.h"
 #include "g_game.h"
 #include "r_render.h"
-#include "d_display.h"
 #include "def.h"
 #include <assert.h>
 #include <vulkan/vulkan_core.h>
 
 Player player;
+
+static const Vec2 frontDir = {0.0, -1.0};
 
 static void initFrameCommands(void)
 {
@@ -62,6 +64,32 @@ void g_Init(void)
 {
     initFrameCommands();
     initPlayer();
+}
+
+void g_Responder(const I_Event* event)
+{
+    if (event->type == i_Keydown) 
+    {
+        switch (event->data) 
+        {
+            case KEY_W:
+                {
+                Vec2 accel = frontDir;
+                m_Scale(0.05, &accel);
+                m_Rotate(player.object->angle, &accel);
+                m_Add(accel, &player.object->accel);
+                printf("Accelerating...\n");
+                break;
+                }
+            case KEY_A:
+                player.object->angVel -= 0.01;
+                break;
+            case KEY_D:
+                player.object->angVel += 0.01;
+                break;
+            default: return;
+        }
+    }
 }
 
 void g_CleanUp(void)

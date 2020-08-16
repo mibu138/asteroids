@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g -DVERBOSE=1 
-LIBS = -lvulkan -lxcb -lm
+LIBS = -lvulkan -lxcb -lxcb-keysyms -lm
 O = build
 
 NAME = as

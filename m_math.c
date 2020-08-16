@@ -34,6 +34,12 @@ void m_Scale(const float s, Vec2* v)
     v->y *= s;
 }
 
+void m_Add(const Vec2 v1, Vec2* v2)
+{
+    v2->x += v1.x;
+    v2->y += v1.y;
+}
+
 float m_Rand(void)
 {
     return rand() / (float)RAND_MAX;

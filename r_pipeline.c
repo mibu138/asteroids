@@ -1,6 +1,6 @@
 #include "r_pipeline.h"
 #include "m_math.h"
-#include "d_display.h"
+#include "def.h"
 #include <stdio.h>
 #include <assert.h>
 #include <vulkan/vulkan_core.h>

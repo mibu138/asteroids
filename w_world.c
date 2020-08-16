@@ -45,6 +45,10 @@ static void updateObjectGeo(W_Object* object)
 static void updateObject(W_Object* object)
 {
     resetObjectGeo(object);
+    m_Add(object->accel, &object->vel);
+    m_Add(object->vel, &object->pos);
+    m_Scale(0.5, &object->accel);
+    m_Scale(0.5, &object->vel);
     object->angle += object->angVel;
     updateObjectGeo(object);
 }

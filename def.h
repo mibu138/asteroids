@@ -13,4 +13,13 @@
 #define V1_PRINT(msg, args...)
 #endif
 
+#define WINDOW_WIDTH  800
+#define WINDOW_HEIGHT 800
+
+// key values are ascii lower case
+#define KEY_W 119
+#define KEY_A 97
+#define KEY_S 115
+#define KEY_D 100
+
 #endif /* end of include guard: DEF_H */

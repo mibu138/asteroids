@@ -5,9 +5,7 @@ d_display.c
 #define D_INIT_H
 
 #include <xcb/xcb.h>
-
-#define WINDOW_WIDTH  800
-#define WINDOW_HEIGHT 800
+#include <xcb/xcb_keysyms.h>
 
 typedef struct {
     xcb_connection_t* connection;

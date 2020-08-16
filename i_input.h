@@ -3,17 +3,21 @@
 
 #include <stdint.h>
 
+typedef uint32_t I_EventData;
+
 typedef enum {
-    keydown,
-    keyup,
+    i_Keydown,
+    i_Keyup,
 } I_EventType;
 
 typedef struct i_event {
     I_EventType type;
-    uint32_t    data;
+    I_EventData data;
 } I_Event;
 
 void i_Init(void);
 void i_GetEvents(void);
+void i_ProcessEvents(void);
+void i_CleanUp(void);
 
 #endif /* end of include guard: I_INPUT_H */

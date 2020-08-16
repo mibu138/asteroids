@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
     while( 1 ) 
     {
         i_GetEvents();
+        i_ProcessEvents();
         r_WaitOnQueueSubmit();
         w_Update();
         r_RequestFrame();
@@ -39,6 +40,7 @@ int main(int argc, char *argv[])
 
     vkDeviceWaitIdle(device);
 
+    i_CleanUp();
     g_CleanUp();
     w_CleanUp();
     d_CleanUp();
