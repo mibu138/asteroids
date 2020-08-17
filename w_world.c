@@ -51,6 +51,7 @@ static void updateObject(W_Object* object)
     m_Scale(0.5, &object->vel);
     object->angVel += object->angAccel;
     object->angle += object->angVel;
+    object->angVel *= 0.9;
     updateObjectGeo(object);
 }
 

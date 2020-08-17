@@ -25,10 +25,10 @@ static I_EventData getKeyCode(xcb_button_press_event_t* event)
     xcb_keysym_t keySym = xcb_key_symbols_get_keysym(pXcbKeySymbols, event->detail, 0); 
     switch (keySym)
     {
-        case XK_w: printf("FORWARD\n"); return KEY_W;
-        case XK_a: printf("LEFT\n"); return KEY_A;
-        case XK_s: printf("BACKWARD\n"); return KEY_S;
-        case XK_d: printf("RIGHT\n"); return KEY_D;
+        case XK_w: return KEY_W;
+        case XK_a: return KEY_A;
+        case XK_s: return KEY_S;
+        case XK_d: return KEY_D;
         default: return 0;
     }
 }
@@ -37,7 +37,6 @@ static void postEvent(I_Event event)
 {
     events[eventHead] = event;
     eventHead = (eventHead + 1) % MAX_EVENTS;
-    printf("Eventhead: %d\n", eventHead);
 }
 
 void i_Init(void)
@@ -55,23 +54,43 @@ void i_GetEvents(void)
         {
             case XCB_KEY_PRESS: 
                 event.type = i_Keydown; 
-                event.data = getKeyCode((xcb_button_press_event_t*)xEvent);
+                I_EventData keyCode = getKeyCode((xcb_button_press_event_t*)xEvent);
+                if (keyCode == 0) goto end;
+                event.data = keyCode;
                 break;
             case XCB_KEY_RELEASE: 
                 {
                 event.type = i_Keyup;
-                event.data = getKeyCode((xcb_button_press_event_t*)xEvent);
+                I_EventData keyCode = getKeyCode((xcb_button_press_event_t*)xEvent);
+                if (keyCode == 0) goto end;
+                event.data = keyCode;
                 // need to see if this is actually an auto repeat
                 xcb_generic_event_t* next = xcb_poll_for_event(d_XcbWindow.connection);
                 if (next) 
-                    if (XCB_EVENT_RESPONSE_TYPE(next) == XCB_KEY_PRESS && 
-                            getKeyCode((xcb_button_press_event_t*)next) == event.data)
-                        return; //its a repeat
+                {
+                    I_Event event2;
+                    event2.type = XCB_EVENT_RESPONSE_TYPE(next);
+                    event2.data = getKeyCode((xcb_button_press_event_t*)next);
+                    if (event2.type == XCB_KEY_PRESS 
+                            && event2.data == event.data)
+                    {
+                        free(next);
+                        goto end;
+                    }
+                    else
+                    {
+                        postEvent(event);
+                        event = event2;
+                        free(next);
+                    }
+                    break;
+                }
                 break;
                 }
             default: return;
         }
         postEvent(event);
+end:
         free(xEvent);
     }
     // to do
@@ -84,7 +103,6 @@ void i_ProcessEvents(void)
     {
         event = &events[eventTail];   
         g_Responder(event);
-        printf("eventTail: %d\n", eventTail);
     }
 }
 

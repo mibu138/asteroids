@@ -108,11 +108,11 @@ void g_Update(void)
     {
         player.object->angAccel = -0.01;
     }
-    else if (turnRight)
+    if (turnRight)
     {
         player.object->angAccel =  0.01; 
     }
-    else 
+    if (!turnRight && !turnLeft)
         player.object->angAccel = 0.0;
 }
 
