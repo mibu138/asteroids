@@ -42,16 +42,28 @@ static void updateObjectGeo(W_Object* object)
     translateGeo(object->pos, object->geo);
 }
 
+static void wrapAround(W_Object* object)
+{
+    float x = object->pos.x;
+    float y = object->pos.y;
+    if (x < -1) x += 2;
+    if (x >  1) x -= 2;
+    if (y < -1) y += 2;
+    if (y >  1) y -= 2;
+    object->pos.x = x;
+    object->pos.y = y;
+}
+
 static void updateObject(W_Object* object)
 {
     resetObjectGeo(object);
     m_Add(object->accel, &object->vel);
     m_Add(object->vel, &object->pos);
-    m_Scale(0.5, &object->accel);
-    m_Scale(0.5, &object->vel);
+    wrapAround(object);
+    m_Scale(1 - object->drag, &object->vel);
     object->angVel += object->angAccel;
     object->angle += object->angVel;
-    object->angVel *= 0.9;
+    object->angVel *= (1 - object->angDrag);
     updateObjectGeo(object);
 }
 
@@ -84,6 +96,8 @@ void w_Init(void)
             verts[2] = (Vec2){r/2, r/2};
             verts[3] = (Vec2){0.0, -r};
             angVel = 0.0;
+            w_Objects[i].drag = 0.4;
+            w_Objects[i].angDrag = 0.1;
         }
         else
         {

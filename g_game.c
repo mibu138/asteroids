@@ -99,10 +99,16 @@ void g_Update(void)
     if (moveForward)
     {
         Vec2 accel = frontDir;
-        m_Scale(0.005, &accel);
+        m_Scale(0.01, &accel);
         m_Rotate(player.object->angle, &accel);
-        m_Add(accel, &player.object->accel);
+        player.object->accel = accel;
+        //m_Add(accel, &player.object->accel);
         printf("Accelerating...\n");
+    }
+    else 
+    {
+        player.object->accel.x = 0.0;
+        player.object->accel.y = 0.0;
     }
     if (turnLeft)
     {

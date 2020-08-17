@@ -59,6 +59,12 @@ void i_GetEvents(void)
                 event.data = keyCode;
                 break;
             case XCB_KEY_RELEASE: 
+                // bunch of extra stuff here dedicated to detecting autrepeats
+                // the idea is that if a key-release event is detected, followed
+                // by an immediate keypress of the same key, its an autorepeat.
+                // its unclear to me whether very rapidly hitting a key could
+                // result in the same thing, and wheter it is worthwhile 
+                // accounting for that
                 {
                 event.type = i_Keyup;
                 I_EventData keyCode = getKeyCode((xcb_button_press_event_t*)xEvent);
@@ -69,16 +75,18 @@ void i_GetEvents(void)
                 if (next) 
                 {
                     I_Event event2;
-                    event2.type = XCB_EVENT_RESPONSE_TYPE(next);
+                    uint8_t type = XCB_EVENT_RESPONSE_TYPE(next);
                     event2.data = getKeyCode((xcb_button_press_event_t*)next);
-                    if (event2.type == XCB_KEY_PRESS 
+                    if (type == XCB_KEY_PRESS 
                             && event2.data == event.data)
                     {
+                        // is likely an autorepeate
                         free(next);
                         goto end;
                     }
                     else
                     {
+                        event2.type = i_Keyup;
                         postEvent(event);
                         event = event2;
                         free(next);

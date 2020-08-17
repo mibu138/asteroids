@@ -13,8 +13,8 @@
 #define V1_PRINT(msg, args...)
 #endif
 
-#define WINDOW_WIDTH  800
-#define WINDOW_HEIGHT 800
+#define WINDOW_WIDTH  1000
+#define WINDOW_HEIGHT 1000
 
 // key values are ascii lower case
 #define KEY_W 119
