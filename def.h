@@ -17,9 +17,10 @@
 #define WINDOW_HEIGHT 1000
 
 // key values are ascii lower case
-#define KEY_W 119
-#define KEY_A 97
-#define KEY_S 115
-#define KEY_D 100
+#define KEY_W     119
+#define KEY_A     97
+#define KEY_S     115
+#define KEY_D     100
+#define KEY_SPACE 32
 
 #endif /* end of include guard: DEF_H */

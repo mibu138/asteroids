@@ -13,6 +13,7 @@ static const Vec2 frontDir = {0.0, -1.0};
 static bool moveForward;
 static bool turnLeft;
 static bool turnRight;
+static bool fire;
 
 static void initFrameCommands(void)
 {
@@ -87,6 +88,7 @@ void g_Responder(const I_Event* event)
             case KEY_W: moveForward = true; break;
             case KEY_A: turnLeft = true; break;
             case KEY_D: turnRight = true; break;
+            case KEY_SPACE: fire = true; break;
             default: return;
         }
     }
@@ -97,6 +99,7 @@ void g_Responder(const I_Event* event)
             case KEY_W: moveForward = false; break;
             case KEY_A: turnLeft = false; break;
             case KEY_D: turnRight = false; break;
+            case KEY_SPACE: fire = false; break;
             default: return;
         }
     }
@@ -128,6 +131,19 @@ void g_Update(void)
     }
     if (!turnRight && !turnLeft)
         player.object->angAccel = 0.0;
+
+    if (fire)
+    {
+        printf("FIRE!\n");
+        W_Emitable* beam = &w_Emitables[w_CurEmitable];
+        beam->lifeTicks = 100;
+        beam->pos = player.object->pos;
+        Vec2 dir = frontDir;
+        m_Scale(0.03, &dir);
+        m_Rotate(player.object->angle, &dir);
+        beam->vel = dir;
+        w_CurEmitable = (w_CurEmitable + 1) % W_MAX_EMIT;
+    }
 }
 
 void g_CleanUp(void)

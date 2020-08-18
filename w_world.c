@@ -8,6 +8,7 @@
 #define MAX_VERTS_PER_OBJ 16
 
 int        w_ObjectCount;
+int        w_CurEmitable;
 W_Object   w_Objects[W_MAX_OBJ];
 W_Emitable w_Emitables[W_MAX_EMIT];
 Geo        w_Geos[W_MAX_OBJ];
@@ -70,6 +71,21 @@ static void updateObject(W_Object* object)
     updateObjectGeo(object);
 }
 
+static void updateEmitable(W_Emitable* emitable)
+{
+    emitable->vert->x = 0.0;
+    emitable->vert->y = 0.0;
+    m_Add(emitable->vel, &emitable->pos);
+    m_Translate(emitable->pos, emitable->vert);
+    emitable->lifeTicks--;
+    if (emitable->lifeTicks == 0)
+    {
+        // is dead
+        emitable->pos.x = -5; 
+        emitable->pos.y =  0;
+    }
+}
+
 static void initObjects(void)
 {
     w_ObjectCount = 10;
@@ -124,11 +140,10 @@ static void initEmitables(void)
 {
     w_EmitableVertexBlock = z_RequestBlock(W_MAX_EMIT * sizeof(Vertex));
     w_EmitableVertexBuffer = (Vertex*)w_EmitableVertexBlock->address;
-    Vertex* vert;
     for (int i = 0; i < W_MAX_EMIT; i++) 
     {
-        vert = &w_EmitableVertexBuffer[i];
-        vert->x = i / (float)W_MAX_EMIT;
+        w_Emitables[i].vert = &w_EmitableVertexBuffer[i];
+        w_Emitables[i].vert->x = -5; // just get them off screen
     }
 }
 
@@ -143,6 +158,13 @@ void w_Update(void)
     for (int i = 0; i < w_ObjectCount; i++) 
     {
         updateObject(&w_Objects[i]);
+    }
+    for (int i = 0; i < W_MAX_EMIT; i++) 
+    {
+        if (w_Emitables[i].lifeTicks)
+        {
+            updateEmitable(&w_Emitables[i]);
+        }
     }
 }
 

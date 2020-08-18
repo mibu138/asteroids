@@ -28,13 +28,14 @@ typedef struct {
 } W_Object;
 
 typedef struct {
-    Vec2 pos;
-    Vec2 vel;
-    int  lifeTicks;
+    Vec2    pos;
+    Vec2    vel;
+    int     lifeTicks;
+    Vertex* vert;
 } W_Emitable;
 
 extern int        w_ObjectCount;
-extern int        w_ActiveEmit;
+extern int        w_CurEmitable;
 extern W_Object   w_Objects[W_MAX_OBJ];
 extern W_Emitable w_Emitables[W_MAX_EMIT];
 extern Geo        w_Geos[W_MAX_OBJ];
