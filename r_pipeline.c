@@ -11,6 +11,8 @@ static VkDescriptorSetLayout descriptorSetLayout; // no descriptors yet
 
 enum shaderStageType { VERT, FRAG };
 
+#define PIPELINE_COUNT 2
+
 static void initShaderModules(VkShaderModule* vertModule, VkShaderModule* fragModule) 
 {
     VkResult r;
@@ -226,7 +228,21 @@ void initPipelines(void)
         .pInputAssemblyState = &inputAssembly,
     };
 
-    vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, pipelines);
+    // creating the second pipeline info for the emitables
+
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyEmit = inputAssembly;
+    inputAssemblyEmit.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+
+    VkPipelineRasterizationStateCreateInfo rasterizationStateEmit = rasterizationState;
+    rasterizationStateEmit.polygonMode = VK_POLYGON_MODE_POINT;
+
+    VkGraphicsPipelineCreateInfo emitablePipelineInfo = pipelineInfo;
+    emitablePipelineInfo.pRasterizationState = &rasterizationStateEmit;
+    emitablePipelineInfo.pInputAssemblyState = &inputAssemblyEmit;
+
+    VkGraphicsPipelineCreateInfo infos[PIPELINE_COUNT] = {pipelineInfo, emitablePipelineInfo};
+
+    vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, PIPELINE_COUNT, infos, NULL, pipelines);
 
     vkDestroyShaderModule(device, vertModule, NULL);
     vkDestroyShaderModule(device, fragModule, NULL);
@@ -236,7 +252,7 @@ void initPipelines(void)
 
 void cleanUpPipelines()
 {
-    for (int i = 0; i < MAX_PIPELINES; i++) 
+    for (int i = 0; i < PIPELINE_COUNT; i++) 
     {
         vkDestroyPipeline(device, pipelines[i], NULL);
     }

@@ -7,17 +7,20 @@
 
 #define MAX_VERTS_PER_OBJ 16
 
-int      w_ObjectCount;
-W_Object w_Objects[W_MAX_OBJ];
-Geo      w_Geos[W_MAX_OBJ];
-Z_block* w_VertexBlock;
-Vertex*  w_VertexBuffer;
+int        w_ObjectCount;
+W_Object   w_Objects[W_MAX_OBJ];
+W_Emitable w_Emitables[W_MAX_EMIT];
+Geo        w_Geos[W_MAX_OBJ];
+Z_block*   w_ObjectVertexBlock;
+Z_block*   w_EmitableVertexBlock;
+Vertex*    w_ObjectVertexBuffer;
+Vertex*    w_EmitableVertexBuffer;
 
 static void rotateGeo(const float angle, Geo* geo)
 {
     for (int i = 0; i < geo->vertCount; i++) 
     {
-        m_Rotate(angle, &w_VertexBuffer[geo->vertIndex + i]);
+        m_Rotate(angle, &w_ObjectVertexBuffer[geo->vertIndex + i]);
     }
 }
 
@@ -25,7 +28,7 @@ static void translateGeo(const Vec2 t, Geo* geo)
 {
     for (int i = 0; i < geo->vertCount; i++) 
     {
-        m_Translate(t, &w_VertexBuffer[geo->vertIndex + i]);
+        m_Translate(t, &w_ObjectVertexBuffer[geo->vertIndex + i]);
     }
 }
 
@@ -67,12 +70,11 @@ static void updateObject(W_Object* object)
     updateObjectGeo(object);
 }
 
-void w_Init(void)
+static void initObjects(void)
 {
     w_ObjectCount = 10;
-    w_VertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
-    w_VertexBuffer = (Vertex*)w_VertexBlock->address;
-    w_VertexBuffer = w_VertexBuffer;
+    w_ObjectVertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
+    w_ObjectVertexBuffer = (Vertex*)w_ObjectVertexBlock->address;
     assert(w_ObjectCount <= W_MAX_OBJ);
     for (int i = 0; i < w_ObjectCount; i++) 
     {
@@ -84,7 +86,7 @@ void w_Init(void)
         w_Objects[i].angle = i;
         w_Geos[i].vertIndex = i * MAX_VERTS_PER_OBJ;
 
-        Vertex* verts = w_VertexBuffer + w_Geos[i].vertIndex;
+        Vertex* verts = w_ObjectVertexBuffer + w_Geos[i].vertIndex;
         int     vertCount;
 
         if (i == 0) //is player
@@ -116,6 +118,24 @@ void w_Init(void)
 
         updateObjectGeo(&w_Objects[i]);
     }
+}
+
+static void initEmitables(void)
+{
+    w_EmitableVertexBlock = z_RequestBlock(W_MAX_EMIT * sizeof(Vertex));
+    w_EmitableVertexBuffer = (Vertex*)w_EmitableVertexBlock->address;
+    Vertex* vert;
+    for (int i = 0; i < W_MAX_EMIT; i++) 
+    {
+        vert = &w_EmitableVertexBuffer[i];
+        vert->x = i / (float)W_MAX_EMIT;
+    }
+}
+
+void w_Init(void)
+{
+    initObjects();
+    initEmitables();
 }
 
 void w_Update(void)

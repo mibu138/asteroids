@@ -33,6 +33,6 @@ void printWorld()
         printf("Angle: %f\n", obj->angle);
         printf("Mass:  %f\n", obj->mass);
         printf("Geo:   ");
-        printGeo(obj->geo, w_VertexBuffer);
+        printGeo(obj->geo, w_ObjectVertexBuffer);
     }
 }

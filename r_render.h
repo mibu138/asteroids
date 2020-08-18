@@ -5,7 +5,7 @@ r_render.c
 #define R_INIT_H
 
 #define VK_USE_PLATFORM_XCB_KHR
-#define MAX_PIPELINES 1
+#define MAX_PIPELINES 4
 #define FRAME_COUNT 2
 
 #include <vulkan/vulkan.h>

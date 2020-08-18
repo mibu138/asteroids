@@ -30,13 +30,18 @@ typedef struct {
 typedef struct {
     Vec2 pos;
     Vec2 vel;
+    int  lifeTicks;
 } W_Emitable;
 
-extern int      w_ObjectCount;
-extern W_Object w_Objects[W_MAX_OBJ];
-extern Geo      w_Geos[W_MAX_OBJ];
-extern Z_block* w_VertexBlock;
-extern Vertex*  w_VertexBuffer;
+extern int        w_ObjectCount;
+extern int        w_ActiveEmit;
+extern W_Object   w_Objects[W_MAX_OBJ];
+extern W_Emitable w_Emitables[W_MAX_EMIT];
+extern Geo        w_Geos[W_MAX_OBJ];
+extern Z_block*   w_ObjectVertexBlock;
+extern Z_block*   w_EmitableVertexBlock;
+extern Vertex*    w_ObjectVertexBuffer;
+extern Vertex*    w_EmitableVertexBuffer;
 
 void w_Init(void);
 void w_Update(void);
