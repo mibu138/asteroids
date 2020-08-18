@@ -1,6 +1,7 @@
 #include "m_math.h"
 #include "g_game.h"
 #include "r_render.h"
+#include "r_pipeline.h"
 #include "def.h"
 #include <assert.h>
 #include <vulkan/vulkan_core.h>
@@ -36,7 +37,7 @@ static void initFrameCommands(void)
 
         vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[0]);
+        vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[r_ObjPipeId]);
 
         VkDeviceSize vertBufferOffset = w_ObjectVertexBlock->vOffset; 
 
@@ -49,6 +50,13 @@ static void initFrameCommands(void)
             vkCmdDraw(frame->commandBuffer, w_Geos[i].vertCount, 1, w_Geos[i].vertIndex, 0);
         }
 
+        vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[r_EmitPipeId]);
+
+        VkDeviceSize emitVertBufferOffset = w_EmitableVertexBlock->vOffset;
+
+        vkCmdBindVertexBuffers(frame->commandBuffer, 0, 1, w_EmitableVertexBlock->vBuffer, &emitVertBufferOffset);
+
+        vkCmdDraw(frame->commandBuffer, W_MAX_EMIT, 1, 0, 0);
 
         vkCmdEndRenderPass(frame->commandBuffer);
 
