@@ -46,7 +46,7 @@ static void initFrameCommands(void)
                                         // which happens to be 0 right now (though does not have to be)
         vkCmdBindVertexBuffers(frame->commandBuffer, 0, 1, w_ObjectVertexBlock->vBuffer, &vertBufferOffset);
 
-        for (int i = 0; i < w_ObjectCount; i++) 
+        for (int i = 0; i < W_MAX_OBJ; i++) 
         {
             vkCmdDraw(frame->commandBuffer, w_Geos[i].vertCount, 1, w_Geos[i].vertIndex, 0);
         }
@@ -143,6 +143,7 @@ void g_Update(void)
         m_Rotate(player.object->angle, &dir);
         beam->vel = dir;
         w_CurEmitable = (w_CurEmitable + 1) % W_MAX_EMIT;
+        fire = false;
     }
 }
 

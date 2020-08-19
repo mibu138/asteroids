@@ -58,8 +58,20 @@ static void wrapAround(W_Object* object)
     object->pos.y = y;
 }
 
+static void destroyObject(W_Object* object)
+{
+    resetObjectGeo(object);
+    const Vec2 t = {-5, 0};
+    translateGeo(t, object->geo);
+}
+
 static void updateObject(W_Object* object)
 {
+    if (object->destroyed)
+    {
+        destroyObject(object);
+        return;
+    }
     resetObjectGeo(object);
     m_Add(object->accel, &object->vel);
     m_Add(object->vel, &object->pos);
@@ -73,17 +85,18 @@ static void updateObject(W_Object* object)
 
 static void updateEmitable(W_Emitable* emitable)
 {
-    emitable->vert->x = 0.0;
-    emitable->vert->y = 0.0;
-    m_Add(emitable->vel, &emitable->pos);
-    m_Translate(emitable->pos, emitable->vert);
-    emitable->lifeTicks--;
     if (emitable->lifeTicks == 0)
     {
         // is dead
         emitable->pos.x = -5; 
         emitable->pos.y =  0;
+        return;
     }
+    emitable->vert->x = 0.0;
+    emitable->vert->y = 0.0;
+    m_Add(emitable->vel, &emitable->pos);
+    m_Translate(emitable->pos, emitable->vert);
+    emitable->lifeTicks--;
 }
 
 static void initObjects(void)
@@ -116,6 +129,7 @@ static void initObjects(void)
             angVel = 0.0;
             w_Objects[i].drag = 0.4;
             w_Objects[i].angDrag = 0.1;
+            w_Objects[i].radius = r;
         }
         else
         {
@@ -126,11 +140,13 @@ static void initObjects(void)
             verts[2] = (Vec2){-r, -r};
             verts[3] = (Vec2){r, -r};
             verts[4] = (Vec2){r, r};
+            w_Objects[i].radius = r;
         }
 
         w_Objects[i].angVel = angVel;
         w_Geos[i].vertCount    = vertCount;
         w_Objects[i].geo = &w_Geos[i];
+        w_Objects[i].active = true;
 
         updateObjectGeo(&w_Objects[i]);
     }
@@ -147,6 +163,31 @@ static void initEmitables(void)
     }
 }
 
+static void detectCollisions(void)
+{
+    for (int i = 0; i < W_MAX_EMIT; i++) 
+    {
+        if (w_Emitables[i].lifeTicks)
+        {
+            // start at 1 becuase 1 is player
+            for (int j = 1; j < w_ObjectCount; j++) 
+            {
+                Vec2 p = w_Emitables[i].pos;
+                m_Translate(w_Objects[j].pos, &p);
+                const float length2 = p.x * p.x + p.y + p.y;
+                if (length2 < w_Objects[j].radius)
+                {
+                    // collision
+                    w_Objects[j].destroyed = true;
+                    w_Emitables[i].lifeTicks = 0;
+                    printf("Collision!\n");
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void w_Init(void)
 {
     initObjects();
@@ -155,10 +196,23 @@ void w_Init(void)
 
 void w_Update(void)
 {
+    int destroyed = 0;
     for (int i = 0; i < w_ObjectCount; i++) 
     {
+        if (w_Objects[i].destroyed)
+        {
+            W_Object temp;
+            int index = w_ObjectCount;
+            while (w_Objects[--index].destroyed);
+            temp = w_Objects[index];
+            w_Objects[index] = w_Objects[i];
+            w_Objects[i] = temp;
+            destroyed++;
+        }
         updateObject(&w_Objects[i]);
     }
+    w_ObjectCount -= destroyed;
+    assert(w_ObjectCount > 0);
     for (int i = 0; i < W_MAX_EMIT; i++) 
     {
         if (w_Emitables[i].lifeTicks)
@@ -166,6 +220,7 @@ void w_Update(void)
             updateEmitable(&w_Emitables[i]);
         }
     }
+    detectCollisions();
 }
 
 void w_CleanUp()

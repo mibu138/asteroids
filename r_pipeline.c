@@ -173,7 +173,7 @@ void initPipelines(void)
         .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .depthBiasEnable = VK_FALSE,
-        .lineWidth = 1.0
+        .lineWidth = 2.0
     };
 
     const VkPipelineMultisampleStateCreateInfo multisampleState = {

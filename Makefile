@@ -2,6 +2,8 @@ CC = gcc
 CFLAGS = -Wall -g -DVERBOSE=1 
 LIBS = -lvulkan -lxcb -lxcb-keysyms -lm
 O = build
+GLSL = shaders
+SPV  = shaders/spv
 
 NAME = as
 
@@ -27,16 +29,25 @@ OBJS = 					  \
 		$(O)/i_input.o    \
 		$(O)/utils.o
 
+SHADERS =                      \
+		$(SPV)/simple-vert.spv \
+		$(SPV)/simple-frag.spv \
+
 all: $(O)/$(NAME) tags
+
+shaders: $(SHADERS)
 
 clean: 
 	rm -f $(O)/*
 
 tags: 
 	ctags .
-
+	
 $(O)/$(NAME): main.c $(OBJS) $(DEPS)
 	$(CC) $(CFLAGS) $(OBJS) $< -o $@ $(LIBS)
 
 $(O)/%.o:  %.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+$(SPV)/%-vert.spv: $(GLSL)/%.vert
+	glslc $< -o $@

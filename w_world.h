@@ -4,7 +4,7 @@
 #include "m_math.h"
 #include "z_memory.h"
 
-#define W_MAX_OBJ  64
+#define W_MAX_OBJ  128
 #define W_MAX_EMIT 32
 
 typedef Vec2 Vertex;
@@ -24,7 +24,10 @@ typedef struct {
     float angAccel;
     float angDrag;
     float mass;
+    float radius;
     Geo*  geo;
+    bool  destroyed;
+    bool  active;
 } W_Object;
 
 typedef struct {

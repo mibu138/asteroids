@@ -264,7 +264,9 @@ static void initDevice(void)
     assert( VK_TRUE == availableFeatures.fillModeNonSolid );
 
     VkPhysicalDeviceFeatures enabledFeatures = {
-        .fillModeNonSolid = VK_TRUE
+        .fillModeNonSolid = VK_TRUE,
+        .wideLines = VK_TRUE,
+        .largePoints = VK_TRUE
     };
 
     const VkDeviceCreateInfo dci = {
