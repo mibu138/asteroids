@@ -2,6 +2,7 @@
 #define DEF_H
 
 #include <stdio.h>
+#include <setjmp.h>
 
 #ifndef VERBOSE
 #define VERBOSE 1
@@ -22,5 +23,8 @@
 #define KEY_S     115
 #define KEY_D     100
 #define KEY_SPACE 32
+#define KEY_ESC   27
+
+extern jmp_buf exit_game;
 
 #endif /* end of include guard: DEF_H */

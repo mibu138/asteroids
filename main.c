@@ -5,10 +5,14 @@
 #include "z_memory.h"
 #include "i_input.h"
 #include "utils.h"
+#include "def.h"
 #include <stdio.h>
 #include <assert.h>
 #include <unistd.h>
 #include <vulkan/vulkan_core.h>
+#include <time.h>
+
+jmp_buf exit_game;
 
 int main(int argc, char *argv[])
 {
@@ -27,17 +31,37 @@ int main(int argc, char *argv[])
 
     printWorld();
 
+    struct timespec startTime;
+    struct timespec endTime;
+
+    unsigned long frameCount = 0;
+    unsigned long nsElapsed  = 0;
+
     while( 1 ) 
     {
+        if (setjmp(exit_game)) break;
+
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &startTime);
+        
         i_GetEvents();
         i_ProcessEvents();
         g_Update();
-        r_WaitOnQueueSubmit();
         w_Update();
         r_RequestFrame();
         r_PresentFrame();
+
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &endTime);
+
+        nsElapsed += endTime.tv_nsec - startTime.tv_nsec;
+
         usleep(30000);
+        frameCount++;
     }
+
+    printf("Total Frames: %ld\n", frameCount);
+    printf("Total nanoseconds: %ld\n", nsElapsed);
+    //printf("Total seconds: %ld\n", sElapsed);
+    printf("Average nanoseconds per frame: %ld\n", nsElapsed / frameCount);
 
     vkDeviceWaitIdle(device);
 

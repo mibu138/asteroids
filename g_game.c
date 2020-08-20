@@ -4,6 +4,7 @@
 #include "r_pipeline.h"
 #include "def.h"
 #include <assert.h>
+#include <setjmp.h>
 #include <vulkan/vulkan_core.h>
 
 Player player;
@@ -89,6 +90,7 @@ void g_Responder(const I_Event* event)
             case KEY_A: turnLeft = true; break;
             case KEY_D: turnRight = true; break;
             case KEY_SPACE: fire = true; break;
+            case KEY_ESC: longjmp(exit_game, 1);
             default: return;
         }
     }
@@ -114,7 +116,6 @@ void g_Update(void)
         m_Rotate(player.object->angle, &accel);
         player.object->accel = accel;
         //m_Add(accel, &player.object->accel);
-        printf("Accelerating...\n");
     }
     else 
     {
@@ -134,7 +135,6 @@ void g_Update(void)
 
     if (fire)
     {
-        printf("FIRE!\n");
         W_Emitable* beam = &w_Emitables[w_CurEmitable];
         beam->lifeTicks = 100;
         beam->pos = player.object->pos;

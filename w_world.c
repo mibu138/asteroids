@@ -1,8 +1,9 @@
 #include "w_world.h"
-#include "m_math.h"
 #include "z_memory.h"
+#include "r_render.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 #define MAX_VERTS_PER_OBJ 16
@@ -40,6 +41,14 @@ static void resetObjectGeo(W_Object* object)
     rotateGeo(-1 * object->angle, object->geo); // reset
 }
 
+static void resetObject(W_Object* object)
+{
+    Geo* geo = object->geo;
+    memset(object, 0, sizeof(W_Object));
+    object->geo = geo;
+    object->mass = 1.0;
+}
+
 static void updateObjectGeo(W_Object* object)
 {
     rotateGeo(object->angle, object->geo);
@@ -63,6 +72,7 @@ static void destroyObject(W_Object* object)
     resetObjectGeo(object);
     const Vec2 t = {-5, 0};
     translateGeo(t, object->geo);
+    resetObject(object);
 }
 
 static void updateObject(W_Object* object)
@@ -88,8 +98,12 @@ static void updateEmitable(W_Emitable* emitable)
     if (emitable->lifeTicks == 0)
     {
         // is dead
-        emitable->pos.x = -5; 
+        emitable->pos.x =  0; 
         emitable->pos.y =  0;
+        emitable->vel.x = 0;
+        emitable->vel.y = 0;
+        emitable->vert->x = -5;
+        emitable->vert->y = 0;
         return;
     }
     emitable->vert->x = 0.0;
@@ -141,6 +155,8 @@ static void initObjects(void)
             verts[3] = (Vec2){r, -r};
             verts[4] = (Vec2){r, r};
             w_Objects[i].radius = r;
+            w_Objects[i].vel.x = m_RandNeg() * 0.01;
+            w_Objects[i].vel.y = m_RandNeg() * 0.01;
         }
 
         w_Objects[i].angVel = angVel;
@@ -172,15 +188,17 @@ static void detectCollisions(void)
             // start at 1 becuase 1 is player
             for (int j = 1; j < w_ObjectCount; j++) 
             {
-                Vec2 p = w_Emitables[i].pos;
-                m_Translate(w_Objects[j].pos, &p);
-                const float length2 = p.x * p.x + p.y + p.y;
-                if (length2 < w_Objects[j].radius)
+                Vec2 epos = w_Emitables[i].pos;
+                Vec2 opos = w_Objects[j].pos;
+                m_Scale(-1, &opos);
+                m_Translate(opos, &epos);
+                const float length2 = m_Length2(epos);
+                if (length2 < w_Objects[j].radius * w_Objects[j].radius)
                 {
                     // collision
                     w_Objects[j].destroyed = true;
                     w_Emitables[i].lifeTicks = 0;
-                    printf("Collision!\n");
+                    printf("Collision! Object id: %d\n", j);
                     break;
                 }
             }
@@ -196,31 +214,33 @@ void w_Init(void)
 
 void w_Update(void)
 {
-    int destroyed = 0;
-    for (int i = 0; i < w_ObjectCount; i++) 
+
+    detectCollisions();
+
+    r_WaitOnQueueSubmit();
+    // we are now free to modify vertices
+
+    const int objectCount = w_ObjectCount;
+    for (int i = 0; i < objectCount; i++) 
     {
-        if (w_Objects[i].destroyed)
-        {
-            W_Object temp;
-            int index = w_ObjectCount;
-            while (w_Objects[--index].destroyed);
-            temp = w_Objects[index];
-            w_Objects[index] = w_Objects[i];
-            w_Objects[i] = temp;
-            destroyed++;
-        }
+//        if (w_Objects[i].destroyed)
+//        {
+//            W_Object temp;
+//            int index = objectCount;
+//            while (w_Objects[--index].destroyed);
+//            temp = w_Objects[index];
+//            w_Objects[index] = w_Objects[i];
+//            w_Objects[i] = temp;
+//            destroyed++;
+//        }
         updateObject(&w_Objects[i]);
     }
-    w_ObjectCount -= destroyed;
-    assert(w_ObjectCount > 0);
+//    w_ObjectCount -= destroyed;
+//    assert(w_ObjectCount > 0);
     for (int i = 0; i < W_MAX_EMIT; i++) 
     {
-        if (w_Emitables[i].lifeTicks)
-        {
-            updateEmitable(&w_Emitables[i]);
-        }
+        updateEmitable(&w_Emitables[i]);
     }
-    detectCollisions();
 }
 
 void w_CleanUp()

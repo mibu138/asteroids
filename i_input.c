@@ -25,11 +25,12 @@ static I_EventData getKeyCode(xcb_button_press_event_t* event)
     xcb_keysym_t keySym = xcb_key_symbols_get_keysym(pXcbKeySymbols, event->detail, 0); 
     switch (keySym)
     {
-        case XK_w:     return KEY_W;
-        case XK_a:     return KEY_A;
-        case XK_s:     return KEY_S;
-        case XK_d:     return KEY_D;
-        case XK_space: return KEY_SPACE;
+        case XK_w:      return KEY_W;
+        case XK_a:      return KEY_A;
+        case XK_s:      return KEY_S;
+        case XK_d:      return KEY_D;
+        case XK_space:  return KEY_SPACE;
+        case XK_Escape: return KEY_ESC;
         default: return 0;
     }
 }
