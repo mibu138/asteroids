@@ -41,16 +41,16 @@ int main(int argc, char *argv[])
     {
         if (setjmp(exit_game)) break;
 
-        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &startTime);
-        
         i_GetEvents();
         i_ProcessEvents();
         g_Update();
+        w_DetectCollisions();
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &startTime);
+        r_WaitOnQueueSubmit();
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &endTime);
         w_Update();
         r_RequestFrame();
         r_PresentFrame();
-
-        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &endTime);
 
         nsElapsed += endTime.tv_nsec - startTime.tv_nsec;
 

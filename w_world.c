@@ -179,7 +179,7 @@ static void initEmitables(void)
     }
 }
 
-static void detectCollisions(void)
+void w_DetectCollisions(void)
 {
     for (int i = 0; i < W_MAX_EMIT; i++) 
     {
@@ -214,12 +214,7 @@ void w_Init(void)
 
 void w_Update(void)
 {
-
-    detectCollisions();
-
-    r_WaitOnQueueSubmit();
     // we are now free to modify vertices
-
     const int objectCount = w_ObjectCount;
     for (int i = 0; i < objectCount; i++) 
     {

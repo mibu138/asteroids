@@ -48,6 +48,7 @@ extern Vertex*    w_ObjectVertexBuffer;
 extern Vertex*    w_EmitableVertexBuffer;
 
 void w_Init(void);
+void w_DetectCollisions(void);
 void w_Update(void);
 void w_CleanUp(void);
 
