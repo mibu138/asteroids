@@ -34,6 +34,11 @@ void m_Scale(const float s, Vec2* v)
     v->y *= s;
 }
 
+float m_Length(const Vec2 v)
+{
+    return sqrt(m_Length2(v));
+}
+
 float m_Length2(const Vec2 v)
 {
     return v.x * v.x + v.y * v.y;

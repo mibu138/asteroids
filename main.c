@@ -34,25 +34,27 @@ int main(int argc, char *argv[])
     struct timespec startTime;
     struct timespec endTime;
 
-    unsigned long frameCount = 0;
-    unsigned long nsElapsed  = 0;
+    uint64_t frameCount = 0;
+    uint64_t nsElapsed  = 0;
 
     while( 1 ) 
     {
         if (setjmp(exit_game)) break;
 
+        clock_gettime(CLOCK_MONOTONIC, &startTime);
+
         i_GetEvents();
         i_ProcessEvents();
         g_Update();
         w_DetectCollisions();
-        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &startTime);
         r_WaitOnQueueSubmit();
-        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &endTime);
         w_Update();
         r_RequestFrame();
         r_PresentFrame();
 
-        nsElapsed += endTime.tv_nsec - startTime.tv_nsec;
+        clock_gettime(CLOCK_MONOTONIC, &endTime);
+
+        nsElapsed += (endTime.tv_nsec - startTime.tv_nsec) + (endTime.tv_sec - startTime.tv_sec) * 1000000000;
 
         usleep(30000);
         frameCount++;
@@ -60,7 +62,6 @@ int main(int argc, char *argv[])
 
     printf("Total Frames: %ld\n", frameCount);
     printf("Total nanoseconds: %ld\n", nsElapsed);
-    //printf("Total seconds: %ld\n", sElapsed);
     printf("Average nanoseconds per frame: %ld\n", nsElapsed / frameCount);
 
     vkDeviceWaitIdle(device);

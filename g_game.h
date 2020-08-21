@@ -13,5 +13,6 @@ void g_Responder(const I_Event* event);
 void g_Update(void);
 void g_RotateAllObjects(void);
 void g_CleanUp(void);
+void r_RecordCommands(Frame*);
 
 #endif /* end of include guard: G_GAME_H */

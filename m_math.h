@@ -22,6 +22,7 @@ void m_Add(const Vec2, Vec2*);
 float m_Rand(void); 
 //returns a random float between -1 and 1
 float m_RandNeg(void); 
+float m_Length(const Vec2);
 float m_Length2(const Vec2);
 
 #endif /* end of include guard: M_MATH_H */

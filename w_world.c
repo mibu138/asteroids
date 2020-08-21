@@ -18,6 +18,8 @@ Z_block*   w_EmitableVertexBlock;
 Vertex*    w_ObjectVertexBuffer;
 Vertex*    w_EmitableVertexBuffer;
 
+static Collider w_Colliders[W_MAX_OBJ];
+
 static void rotateGeo(const float angle, Geo* geo)
 {
     for (int i = 0; i < geo->vertCount; i++) 
@@ -34,25 +36,28 @@ static void translateGeo(const Vec2 t, Geo* geo)
     }
 }
 
-static void resetObjectGeo(W_Object* object)
+static void resetObjectGeo(const int index)
 {
+    const W_Object* object = &w_Objects[index];
     const Vec2 t = { -1 * object->pos.x, -1 * object->pos.y };
-    translateGeo(t, object->geo);
-    rotateGeo(-1 * object->angle, object->geo); // reset
+    translateGeo(t, &w_Geos[index]);
+    rotateGeo(-1 * object->angle, &w_Geos[index]); // reset
 }
 
 static void resetObject(W_Object* object)
 {
-    Geo* geo = object->geo;
-    memset(object, 0, sizeof(W_Object));
-    object->geo = geo;
-    object->mass = 1.0;
+//    fuck it
+//    Geo* geo = object->geo;
+//    memset(object, 0, sizeof(W_Object));
+//    object->geo = geo;
+//    object->mass = 1.0;
 }
 
-static void updateObjectGeo(W_Object* object)
+static void updateObjectGeo(const int index)
 {
-    rotateGeo(object->angle, object->geo);
-    translateGeo(object->pos, object->geo);
+    const W_Object* object = &w_Objects[index];
+    rotateGeo(object->angle, &w_Geos[index]);
+    translateGeo(object->pos, &w_Geos[index]);
 }
 
 static void wrapAround(W_Object* object)
@@ -67,22 +72,26 @@ static void wrapAround(W_Object* object)
     object->pos.y = y;
 }
 
-static void destroyObject(W_Object* object)
+static void destroyObject(const int index)
 {
-    resetObjectGeo(object);
+    resetObjectGeo(index);
     const Vec2 t = {-5, 0};
-    translateGeo(t, object->geo);
-    resetObject(object);
+    translateGeo(t, &w_Geos[index]);
+    //resetObject(object);
 }
 
-static void updateObject(W_Object* object)
+static void updatePlayer(void)
 {
-    if (object->destroyed)
-    {
-        destroyObject(object);
-        return;
-    }
-    resetObjectGeo(object);
+    W_Object* player = &w_Objects[0];
+    float speed = m_Length(player->vel);
+    float drag;
+    player->drag = (drag = speed * 5) > 1 ? 1 : drag;
+}
+
+static void updateObject(const int index)
+{
+    W_Object* object = &w_Objects[index];
+    resetObjectGeo(index);
     m_Add(object->accel, &object->vel);
     m_Add(object->vel, &object->pos);
     wrapAround(object);
@@ -90,7 +99,7 @@ static void updateObject(W_Object* object)
     object->angVel += object->angAccel;
     object->angle += object->angVel;
     object->angVel *= (1 - object->angDrag);
-    updateObjectGeo(object);
+    updateObjectGeo(index);
 }
 
 static void updateEmitable(W_Emitable* emitable)
@@ -143,7 +152,7 @@ static void initObjects(void)
             angVel = 0.0;
             w_Objects[i].drag = 0.4;
             w_Objects[i].angDrag = 0.1;
-            w_Objects[i].radius = r;
+            w_Colliders[i].radius = r;
         }
         else
         {
@@ -154,17 +163,15 @@ static void initObjects(void)
             verts[2] = (Vec2){-r, -r};
             verts[3] = (Vec2){r, -r};
             verts[4] = (Vec2){r, r};
-            w_Objects[i].radius = r;
+            w_Colliders[i].radius = r;
             w_Objects[i].vel.x = m_RandNeg() * 0.01;
             w_Objects[i].vel.y = m_RandNeg() * 0.01;
         }
 
         w_Objects[i].angVel = angVel;
         w_Geos[i].vertCount    = vertCount;
-        w_Objects[i].geo = &w_Geos[i];
-        w_Objects[i].active = true;
 
-        updateObjectGeo(&w_Objects[i]);
+        updateObjectGeo(i);
     }
 }
 
@@ -193,7 +200,7 @@ void w_DetectCollisions(void)
                 m_Scale(-1, &opos);
                 m_Translate(opos, &epos);
                 const float length2 = m_Length2(epos);
-                if (length2 < w_Objects[j].radius * w_Objects[j].radius)
+                if (length2 < w_Colliders[j].radius * w_Colliders[j].radius)
                 {
                     // collision
                     w_Objects[j].destroyed = true;
@@ -215,23 +222,17 @@ void w_Init(void)
 void w_Update(void)
 {
     // we are now free to modify vertices
+    updatePlayer();
     const int objectCount = w_ObjectCount;
     for (int i = 0; i < objectCount; i++) 
     {
-//        if (w_Objects[i].destroyed)
-//        {
-//            W_Object temp;
-//            int index = objectCount;
-//            while (w_Objects[--index].destroyed);
-//            temp = w_Objects[index];
-//            w_Objects[index] = w_Objects[i];
-//            w_Objects[i] = temp;
-//            destroyed++;
-//        }
-        updateObject(&w_Objects[i]);
+        if (w_Objects[i].destroyed)
+        {
+            destroyObject(i);
+            break;
+        }
+        updateObject(i);
     }
-//    w_ObjectCount -= destroyed;
-//    assert(w_ObjectCount > 0);
     for (int i = 0; i < W_MAX_EMIT; i++) 
     {
         updateEmitable(&w_Emitables[i]);

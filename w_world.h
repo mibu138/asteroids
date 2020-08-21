@@ -15,19 +15,20 @@ typedef struct {
 } Geo;
 
 typedef struct {
-    Vec2  pos;
-    Vec2  vel;
-    Vec2  accel;
-    float drag;
-    float angle;
-    float angVel;
-    float angAccel;
-    float angDrag;
-    float mass;
     float radius;
-    Geo*  geo;
-    bool  destroyed;
-    bool  active;
+} Collider;
+
+typedef struct {
+    Vec2      pos;
+    Vec2      vel;
+    Vec2      accel;
+    float     drag;
+    float     angle;
+    float     angVel;
+    float     angAccel;
+    float     angDrag;
+    float     mass;
+    bool      destroyed;
 } W_Object;
 
 typedef struct {
