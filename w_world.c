@@ -39,6 +39,7 @@ static void translateGeo(const Vec2 t, Geo* geo)
 
 static void resetObjectGeo(const int index)
 {
+    assert( index >= 0 );
     const W_Object* object = &w_Objects[index];
     const Vec2 t = { -1 * object->pos.x, -1 * object->pos.y };
     translateGeo(t, &w_Geos[index]);
@@ -56,6 +57,7 @@ static void resetObject(W_Object* object)
 
 static void updateObjectGeo(const int index)
 {
+    assert( index >= 0 );
     const W_Object* object = &w_Objects[index];
     rotateGeo(object->angle, &w_Geos[index]);
     translateGeo(object->pos, &w_Geos[index]);
@@ -83,6 +85,7 @@ static void updatePlayer(void)
 
 static void updateObject(const int index)
 {
+    assert( index >= 0 );
     W_Object* object = &w_Objects[index];
     resetObjectGeo(index);
     m_Add(object->accel, &object->vel);
@@ -97,6 +100,7 @@ static void updateObject(const int index)
 
 static void updateEmitable(const int index)
 {
+    assert( index >= 0 );
     W_Emitable* emitable = &w_Emitables[index];
     Vertex* vert = &w_EmitableVertexBuffer[index];
     if (emitable->lifeTicks == 0)
