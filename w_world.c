@@ -7,9 +7,10 @@
 #include <assert.h>
 
 #define MAX_VERTS_PER_OBJ 16
+#define INIT_SPEED 0.005
 
 int        w_ObjectCount;
-int        w_CurEmitable;
+int        w_EmitableCount;
 W_Object   w_Objects[W_MAX_OBJ];
 W_Emitable w_Emitables[W_MAX_EMIT];
 Geo        w_Geos[W_MAX_OBJ];
@@ -72,14 +73,6 @@ static void wrapAround(W_Object* object)
     object->pos.y = y;
 }
 
-static void destroyObject(const int index)
-{
-    resetObjectGeo(index);
-    const Vec2 t = {-5, 0};
-    translateGeo(t, &w_Geos[index]);
-    //resetObject(object);
-}
-
 static void updatePlayer(void)
 {
     W_Object* player = &w_Objects[0];
@@ -102,8 +95,10 @@ static void updateObject(const int index)
     updateObjectGeo(index);
 }
 
-static void updateEmitable(W_Emitable* emitable)
+static void updateEmitable(const int index)
 {
+    W_Emitable* emitable = &w_Emitables[index];
+    Vertex* vert = &w_EmitableVertexBuffer[index];
     if (emitable->lifeTicks == 0)
     {
         // is dead
@@ -111,14 +106,14 @@ static void updateEmitable(W_Emitable* emitable)
         emitable->pos.y =  0;
         emitable->vel.x = 0;
         emitable->vel.y = 0;
-        emitable->vert->x = -5;
-        emitable->vert->y = 0;
+//        vert->x = -5;
+//        vert->y = 0;
         return;
     }
-    emitable->vert->x = 0.0;
-    emitable->vert->y = 0.0;
+    vert->x = 0.0;
+    vert->y = 0.0;
     m_Add(emitable->vel, &emitable->pos);
-    m_Translate(emitable->pos, emitable->vert);
+    m_Translate(emitable->pos, vert);
     emitable->lifeTicks--;
 }
 
@@ -164,8 +159,8 @@ static void initObjects(void)
             verts[3] = (Vec2){r, -r};
             verts[4] = (Vec2){r, r};
             w_Colliders[i].radius = r;
-            w_Objects[i].vel.x = m_RandNeg() * 0.01;
-            w_Objects[i].vel.y = m_RandNeg() * 0.01;
+            w_Objects[i].vel.x = m_RandNeg() * INIT_SPEED;
+            w_Objects[i].vel.y = m_RandNeg() * INIT_SPEED;
         }
 
         w_Objects[i].angVel = angVel;
@@ -179,11 +174,31 @@ static void initEmitables(void)
 {
     w_EmitableVertexBlock = z_RequestBlock(W_MAX_EMIT * sizeof(Vertex));
     w_EmitableVertexBuffer = (Vertex*)w_EmitableVertexBlock->address;
-    for (int i = 0; i < W_MAX_EMIT; i++) 
-    {
-        w_Emitables[i].vert = &w_EmitableVertexBuffer[i];
-        w_Emitables[i].vert->x = -5; // just get them off screen
-    }
+}
+
+static void swapEmit(int a, int b)
+{
+    assert( a >= 0 && b >= 0 );
+    W_Emitable temp = w_Emitables[a];
+    w_Emitables[a] = w_Emitables[b];
+    w_Emitables[b] = temp;
+    Vertex tempVert = w_EmitableVertexBuffer[a];
+    w_EmitableVertexBuffer[a] = w_EmitableVertexBuffer[b];
+    w_EmitableVertexBuffer[b] = tempVert;
+}
+
+static void swapObject(int a, int b)
+{
+    assert( a >= 0 && b >= 0 );
+    const W_Object tempObject = w_Objects[a];
+    w_Objects[a] = w_Objects[b];
+    w_Objects[b] = tempObject;
+    const Geo tempGeo = w_Geos[a];
+    w_Geos[a] = w_Geos[b];
+    w_Geos[b] = tempGeo;
+    const Collider tempCol = w_Colliders[a];
+    w_Colliders[a] = w_Colliders[b];
+    w_Colliders[b] = tempCol;
 }
 
 void w_DetectCollisions(void)
@@ -205,7 +220,6 @@ void w_DetectCollisions(void)
                     // collision
                     w_Objects[j].destroyed = true;
                     w_Emitables[i].lifeTicks = 0;
-                    printf("Collision! Object id: %d\n", j);
                     break;
                 }
             }
@@ -221,21 +235,39 @@ void w_Init(void)
 
 void w_Update(void)
 {
-    // we are now free to modify vertices
     updatePlayer();
     const int objectCount = w_ObjectCount;
+    const int emitableCount = w_EmitableCount;
+    int deadObject = -1;
     for (int i = 0; i < objectCount; i++) 
     {
         if (w_Objects[i].destroyed)
         {
-            destroyObject(i);
+            //destroyObject(i);
+            deadObject = i;
             break;
         }
         updateObject(i);
     }
-    for (int i = 0; i < W_MAX_EMIT; i++) 
+    if (deadObject != -1)
     {
-        updateEmitable(&w_Emitables[i]);
+        swapObject(deadObject, --w_ObjectCount);
+        assert(w_ObjectCount >= 0);
+    }
+    int deadEmit = -1;
+    for (int i = 0; i < emitableCount; i++) 
+    {
+        updateEmitable(i);
+        // check for dead. for now we assume only one dead per frame. 
+        // this is wrong, but keeps things simple. the less than equals
+        // is so that we can clean up possible errors on subsequent frames
+        if (w_Emitables[i].lifeTicks <= 0)
+            deadEmit = i;
+    }
+    if (deadEmit != -1)
+    {
+        swapEmit(deadEmit, --w_EmitableCount);
+        assert( w_EmitableCount >= 0 );
     }
 }
 

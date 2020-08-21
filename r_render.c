@@ -26,11 +26,11 @@ static uint32_t graphicsQueueFamilyIndex = UINT32_MAX; //hopefully this causes o
 static VkQueue  graphicsQueues[G_QUEUE_COUNT];
 static VkQueue  presentQueue;
 
-static Frame         frames[FRAME_COUNT];
+Frame         frames[FRAME_COUNT];
+uint32_t      curFrameIndex = 0;
 static VkSemaphore   imageAcquiredSemaphores[FRAME_COUNT];
 static VkImage       swapchainImages[FRAME_COUNT];
 static uint64_t      frameCounter = 0;
-static uint32_t      curFrameIndex = 0;
 
 static const VkFormat swapFormat = VK_FORMAT_B8G8R8A8_SRGB;
 

@@ -1,6 +1,7 @@
 #include "d_display.h"
 #include "m_math.h"
 #include "r_render.h"
+#include "r_commands.h"
 #include "g_game.h"
 #include "z_memory.h"
 #include "i_input.h"
@@ -13,6 +14,9 @@
 #include <time.h>
 
 jmp_buf exit_game;
+
+#define NS_TARGET 16666666 // 1 / 60 seconds
+#define NS_PER_S  1000000000
 
 int main(int argc, char *argv[])
 {
@@ -31,11 +35,14 @@ int main(int argc, char *argv[])
 
     printWorld();
 
-    struct timespec startTime;
-    struct timespec endTime;
+    struct timespec startTime = {0, 0};
+    struct timespec endTime = {0, 0};
+    struct timespec diffTime = {0, 0};
+    struct timespec remTime = {0, 0}; // this is just if we get signal interupted
 
     uint64_t frameCount = 0;
-    uint64_t nsElapsed  = 0;
+    uint64_t nsTotal    = 0;
+    unsigned long nsDelta    = 0;
 
     while( 1 ) 
     {
@@ -47,22 +54,32 @@ int main(int argc, char *argv[])
         i_ProcessEvents();
         g_Update();
         w_DetectCollisions();
-        r_WaitOnQueueSubmit();
+        // because we will directly modify gpu mapped
+        // memory in the world update, we must ensure
+        // the previous frame is done reading from it
+        r_WaitOnQueueSubmit(); 
         w_Update();
         r_RequestFrame();
+        r_UpdateRenderCommands();
         r_PresentFrame();
 
         clock_gettime(CLOCK_MONOTONIC, &endTime);
 
-        nsElapsed += (endTime.tv_nsec - startTime.tv_nsec) + (endTime.tv_sec - startTime.tv_sec) * 1000000000;
+        nsDelta  = (endTime.tv_sec * NS_PER_S + endTime.tv_nsec) - (startTime.tv_sec * NS_PER_S + startTime.tv_nsec);
+        nsTotal += nsDelta;
 
-        usleep(30000);
+        diffTime.tv_nsec = NS_TARGET - nsDelta;
+
+        assert ( NS_TARGET > nsDelta );
+
+        nanosleep(&diffTime, &remTime);
+
         frameCount++;
     }
 
     printf("Total Frames: %ld\n", frameCount);
-    printf("Total nanoseconds: %ld\n", nsElapsed);
-    printf("Average nanoseconds per frame: %ld\n", nsElapsed / frameCount);
+    printf("Total nanoseconds: %ld\n", nsTotal);
+    printf("Average nanoseconds per frame: %ld\n", nsTotal / frameCount);
 
     vkDeviceWaitIdle(device);
 

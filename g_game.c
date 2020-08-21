@@ -18,63 +18,7 @@ static bool fire;
 
 // should make a seperate r_* module for placing game world specific rendering
 // stuff in
-void r_RecordCommands(Frame* frame)
-{
-    VkResult r;
-    VkCommandBufferBeginInfo cbbi = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-    r = vkBeginCommandBuffer(frame->commandBuffer, &cbbi);
 
-    VkClearValue clearValue = {0.005f, 0.0f, 0.01f, 1.0f};
-
-    VkRenderPassBeginInfo rpassInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .clearValueCount = 1,
-        .pClearValues = &clearValue,
-        .renderArea = {{0, 0}, {WINDOW_WIDTH, WINDOW_HEIGHT}},
-        .renderPass = *frame->pRenderPass,
-        .framebuffer = frame->frameBuffer,
-    };
-
-    vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[r_ObjPipeId]);
-
-    VkDeviceSize vertBufferOffset = w_ObjectVertexBlock->vOffset; 
-
-    assert( 0 == vertBufferOffset ); // should be the offset of the very first vert in the buffer
-                                    // which happens to be 0 right now (though does not have to be)
-    vkCmdBindVertexBuffers(frame->commandBuffer, 0, 1, w_ObjectVertexBlock->vBuffer, &vertBufferOffset);
-
-    for (int i = 0; i < w_ObjectCount; i++) 
-    {
-        vkCmdDraw(frame->commandBuffer, w_Geos[i].vertCount, 1, w_Geos[i].vertIndex, 0);
-    }
-
-    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[r_EmitPipeId]);
-
-    VkDeviceSize emitVertBufferOffset = w_EmitableVertexBlock->vOffset;
-
-    vkCmdBindVertexBuffers(frame->commandBuffer, 0, 1, w_EmitableVertexBlock->vBuffer, &emitVertBufferOffset);
-
-    vkCmdDraw(frame->commandBuffer, W_MAX_EMIT, 1, 0, 0);
-
-    vkCmdEndRenderPass(frame->commandBuffer);
-
-    r = vkEndCommandBuffer(frame->commandBuffer);
-    assert ( VK_SUCCESS == r );
-}
-
-static void initFrameCommands(void)
-{
-    for (int i = 0; i < FRAME_COUNT; i++) 
-    {
-        Frame* frame = r_RequestFrame();
-        
-        r_RecordCommands(frame);
-
-        r_PresentFrame();
-    }
-}
 
 void initPlayer(void)
 {
@@ -83,15 +27,14 @@ void initPlayer(void)
 
 void g_Init(void)
 {
-    initFrameCommands();
     initPlayer();
 }
 
 void g_Responder(const I_Event* event)
 {
-    if (event->type == i_Keydown) 
+    switch (event->type) 
     {
-        switch (event->data) 
+        case i_Keydown: switch (event->data)
         {
             case KEY_W: moveForward = true; break;
             case KEY_A: turnLeft = true; break;
@@ -99,18 +42,16 @@ void g_Responder(const I_Event* event)
             case KEY_SPACE: fire = true; break;
             case KEY_ESC: longjmp(exit_game, 1);
             default: return;
-        }
-    }
-    if (event->type == i_Keyup)
-    {
-        switch (event->data) 
+        } break;
+        case i_Keyup:   switch (event->data)
         {
             case KEY_W: moveForward = false; break;
             case KEY_A: turnLeft = false; break;
             case KEY_D: turnRight = false; break;
             case KEY_SPACE: fire = false; break;
             default: return;
-        }
+        } break;
+        default: assert(0); // error
     }
 }
 
@@ -119,7 +60,7 @@ void g_Update(void)
     if (moveForward)
     {
         Vec2 accel = frontDir;
-        m_Scale(0.005, &accel);
+        m_Scale(0.002, &accel);
         m_Rotate(player.object->angle, &accel);
         player.object->accel = accel;
         //m_Add(accel, &player.object->accel);
@@ -145,14 +86,14 @@ void g_Update(void)
 
     if (fire)
     {
-        W_Emitable* beam = &w_Emitables[w_CurEmitable];
+        assert ( w_EmitableCount < W_MAX_EMIT );
+        W_Emitable* beam = &w_Emitables[w_EmitableCount++];
         beam->lifeTicks = 100;
         beam->pos = player.object->pos;
         Vec2 dir = frontDir;
         m_Scale(0.03, &dir);
         m_Rotate(player.object->angle, &dir);
         beam->vel = dir;
-        w_CurEmitable = (w_CurEmitable + 1) % W_MAX_EMIT;
         fire = false;
     }
 }

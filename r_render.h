@@ -26,6 +26,8 @@ extern VkDevice device;
 extern VkPhysicalDevice physicalDevice;
 extern VkPipeline pipelines[MAX_PIPELINES];
 extern VkRenderPass swapchainRenderPass;
+extern Frame frames[FRAME_COUNT];
+extern uint32_t curFrameIndex;
 
 enum r_PipelineType { R_PIPELINE_TYPE_SIMPLE }; // for indexing into the pipelines array
 
