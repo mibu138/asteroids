@@ -7,7 +7,8 @@
 #define W_MAX_OBJ  128
 #define W_MAX_EMIT 32
 
-typedef Vec2 Vertex;
+typedef Vec2      Vertex;
+typedef uint32_t  Index;
 
 typedef struct {
     int      vertCount;

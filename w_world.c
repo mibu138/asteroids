@@ -6,7 +6,8 @@
 #include <string.h>
 #include <assert.h>
 
-#define MAX_VERTS_PER_OBJ 16
+#define MAX_VERTS_PER_OBJ   16
+#define MAX_INDICES_PER_OBJ 16
 #define INIT_SPEED 0.005
 
 int        w_ObjectCount;
@@ -15,8 +16,10 @@ W_Object   w_Objects[W_MAX_OBJ];
 W_Emitable w_Emitables[W_MAX_EMIT];
 Geo        w_Geos[W_MAX_OBJ];
 Z_block*   w_ObjectVertexBlock;
+Z_block*   w_ObjectIndexBlock;
 Z_block*   w_EmitableVertexBlock;
 Vertex*    w_ObjectVertexBuffer;
+Index*     w_ObjectIndexBuffer;
 Vertex*    w_EmitableVertexBuffer;
 
 static Collider w_Colliders[W_MAX_OBJ];
@@ -126,6 +129,7 @@ static void initObjects(void)
     w_ObjectCount = 10;
     w_ObjectVertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
     w_ObjectVertexBuffer = (Vertex*)w_ObjectVertexBlock->address;
+    //w_ObjectIndexBlock  = z_RequestBlock(
     assert(w_ObjectCount <= W_MAX_OBJ);
     for (int i = 0; i < w_ObjectCount; i++) 
     {
