@@ -1,6 +1,7 @@
 #include "w_world.h"
 #include "z_memory.h"
 #include "r_render.h"
+#include "w_collision.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +23,7 @@ Vertex*    w_ObjectVertexBuffer;
 Index*     w_ObjectIndexBuffer;
 Vertex*    w_EmitableVertexBuffer;
 
-static Collider w_Colliders[W_MAX_OBJ];
+Collider w_Colliders[W_MAX_OBJ];
 
 static void rotateGeo(const float angle, Geo* geo)
 {
@@ -211,27 +212,11 @@ static void swapObject(int a, int b)
 
 void w_DetectCollisions(void)
 {
-    for (int i = 0; i < W_MAX_EMIT; i++) 
+    HitInfo hi = w_DetectBulletObjectCols();
+    if (hi.collision)
     {
-        if (w_Emitables[i].lifeTicks)
-        {
-            // start at 1 becuase 1 is player
-            for (int j = 1; j < w_ObjectCount; j++) 
-            {
-                Vec2 epos = w_Emitables[i].pos;
-                Vec2 opos = w_Objects[j].pos;
-                m_Scale(-1, &opos);
-                m_Translate(opos, &epos);
-                const float length2 = m_Length2(epos);
-                if (length2 < w_Colliders[j].radius * w_Colliders[j].radius)
-                {
-                    // collision
-                    w_Objects[j].destroyed = true;
-                    w_Emitables[i].lifeTicks = 0;
-                    break;
-                }
-            }
-        }
+        w_Emitables[hi.object1].lifeTicks = 0;
+        w_Objects[hi.object2].destroyed = true;
     }
 }
 

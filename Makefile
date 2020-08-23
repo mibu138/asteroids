@@ -7,29 +7,31 @@ SPV  = shaders/spv
 
 NAME = as
 
-DEPS =               \
-		d_display.h  \
-		r_render.h   \
-		r_commands.h \
-		r_pipeline.h \
-		g_game.h     \
-		m_math.h     \
-		w_world.h    \
-		z_memory.h   \
-		i_input.h    \
-		utils.h      \
+DEPS =                 \
+		d_display.h    \
+		r_render.h     \
+		r_commands.h   \
+		r_pipeline.h   \
+		g_game.h       \
+		m_math.h       \
+		w_world.h      \
+		w_collision.h  \
+		z_memory.h     \
+		i_input.h      \
+		utils.h        \
 		def.h
 
-OBJS = 					  \
-		$(O)/d_display.o  \
-		$(O)/r_render.o   \
-		$(O)/r_pipeline.o \
-		$(O)/r_commands.o \
-		$(O)/g_game.o     \
-		$(O)/m_math.o     \
-		$(O)/w_world.o    \
-		$(O)/z_memory.o   \
-		$(O)/i_input.o    \
+OBJS = 					    \
+		$(O)/d_display.o    \
+		$(O)/r_render.o     \
+		$(O)/r_pipeline.o   \
+		$(O)/r_commands.o   \
+		$(O)/g_game.o       \
+		$(O)/m_math.o       \
+		$(O)/w_world.o      \
+		$(O)/w_collision.o  \
+		$(O)/z_memory.o     \
+		$(O)/i_input.o      \
 		$(O)/utils.o
 
 SHADERS =                      \

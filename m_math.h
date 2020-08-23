@@ -5,14 +5,24 @@
 
 #define PI 3.141592653589793
 
-typedef struct vec2 {
+typedef struct {
     float x;
     float y;
 } Vec2;
 
-typedef struct mat2 {
+typedef struct {
     float x00, x01, x10, x11;
 } Mat2;
+
+typedef struct {
+    Vec2 orig;
+    Vec2 dir;
+} Ray;
+
+typedef struct {
+    Vec2 A;
+    Vec2 B;
+} Segment;
 
 void m_Rotate(const float angle /* radians */, Vec2*);
 void m_Translate(const Vec2 t, Vec2*);

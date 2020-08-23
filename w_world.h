@@ -47,6 +47,7 @@ extern Z_block*   w_ObjectVertexBlock;
 extern Z_block*   w_EmitableVertexBlock;
 extern Vertex*    w_ObjectVertexBuffer;
 extern Vertex*    w_EmitableVertexBuffer;
+extern Collider   w_Colliders[W_MAX_OBJ];
 
 void w_Init(void);
 void w_DetectCollisions(void);
