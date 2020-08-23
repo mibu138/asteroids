@@ -18,7 +18,7 @@ static I_Event events[MAX_EVENTS];
 static int     eventHead;
 static int     eventTail;
 
-static I_EventData getKeyCode(xcb_button_press_event_t* event)
+static I_EventData getKeyCode(xcb_key_press_event_t* event)
 {
     // XCB documentation is fucking horrible. fucking last parameter is called col. wtf? 
     // no clue what that means. ZERO documentation on this function. trash.
@@ -55,11 +55,13 @@ void i_GetEvents(void)
         switch (XCB_EVENT_RESPONSE_TYPE(xEvent))
         {
             case XCB_KEY_PRESS: 
+                {
                 event.type = i_Keydown; 
-                I_EventData keyCode = getKeyCode((xcb_button_press_event_t*)xEvent);
+                I_EventData keyCode = getKeyCode((xcb_key_press_event_t*)xEvent);
                 if (keyCode == 0) goto end;
                 event.data = keyCode;
                 break;
+                }
             case XCB_KEY_RELEASE: 
                 // bunch of extra stuff here dedicated to detecting autrepeats
                 // the idea is that if a key-release event is detected, followed
@@ -69,7 +71,7 @@ void i_GetEvents(void)
                 // accounting for that
                 {
                 event.type = i_Keyup;
-                I_EventData keyCode = getKeyCode((xcb_button_press_event_t*)xEvent);
+                I_EventData keyCode = getKeyCode((xcb_key_press_event_t*)xEvent);
                 if (keyCode == 0) goto end;
                 event.data = keyCode;
                 // need to see if this is actually an auto repeat
@@ -78,7 +80,7 @@ void i_GetEvents(void)
                 {
                     I_Event event2;
                     uint8_t type = XCB_EVENT_RESPONSE_TYPE(next);
-                    event2.data = getKeyCode((xcb_button_press_event_t*)next);
+                    event2.data = getKeyCode((xcb_key_press_event_t*)next);
                     if (type == XCB_KEY_PRESS 
                             && event2.data == event.data)
                     {
