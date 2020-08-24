@@ -21,10 +21,12 @@ typedef struct {
 
 typedef struct {
     Vec2      pos;
+    Vec2      prevPos;
+    float     angle;
+    float     prevAngle;
     Vec2      vel;
     Vec2      accel;
     float     drag;
-    float     angle;
     float     angVel;
     float     angAccel;
     float     angDrag;
@@ -53,5 +55,6 @@ void w_Init(void);
 void w_DetectCollisions(void);
 void w_Update(void);
 void w_CleanUp(void);
+void w_UpdateDrawables(void);
 
 #endif /* end of include guard: W_WORLD_H */

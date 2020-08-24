@@ -25,7 +25,7 @@ Vertex*    w_EmitableVertexBuffer;
 
 Collider w_Colliders[W_MAX_OBJ];
 
-static void rotateGeo(const float angle, Geo* geo)
+static void rotateGeo(const float angle, const Geo* geo)
 {
     for (int i = 0; i < geo->vertCount; i++) 
     {
@@ -33,7 +33,7 @@ static void rotateGeo(const float angle, Geo* geo)
     }
 }
 
-static void translateGeo(const Vec2 t, Geo* geo)
+static void translateGeo(const Vec2 t, const Geo* geo)
 {
     for (int i = 0; i < geo->vertCount; i++) 
     {
@@ -45,18 +45,9 @@ static void resetObjectGeo(const int index)
 {
     assert( index >= 0 );
     const W_Object* object = &w_Objects[index];
-    const Vec2 t = { -1 * object->pos.x, -1 * object->pos.y };
+    const Vec2 t = { -1 * object->prevPos.x, -1 * object->prevPos.y };
     translateGeo(t, &w_Geos[index]);
-    rotateGeo(-1 * object->angle, &w_Geos[index]); // reset
-}
-
-static void resetObject(W_Object* object)
-{
-//    fuck it
-//    Geo* geo = object->geo;
-//    memset(object, 0, sizeof(W_Object));
-//    object->geo = geo;
-//    object->mass = 1.0;
+    rotateGeo(-1 * object->prevAngle, &w_Geos[index]); // reset
 }
 
 static void updateObjectGeo(const int index)
@@ -91,7 +82,8 @@ static void updateObject(const int index)
 {
     assert( index >= 0 );
     W_Object* object = &w_Objects[index];
-    resetObjectGeo(index);
+    object->prevAngle = object->angle;
+    object->prevPos   = object->pos;
     m_Add(object->accel, &object->vel);
     m_Add(object->vel, &object->pos);
     wrapAround(object);
@@ -99,30 +91,13 @@ static void updateObject(const int index)
     object->angVel += object->angAccel;
     object->angle += object->angVel;
     object->angVel *= (1 - object->angDrag);
-    updateObjectGeo(index);
 }
 
 static void updateEmitable(const int index)
 {
     assert( index >= 0 );
     W_Emitable* emitable = &w_Emitables[index];
-    Vertex* vert = &w_EmitableVertexBuffer[index];
-    if (emitable->lifeTicks == 0)
-    {
-        // is dead
-        emitable->pos.x =  0; 
-        emitable->pos.y =  0;
-        emitable->vel.x = 0;
-        emitable->vel.y = 0;
-//        vert->x = -5;
-//        vert->y = 0;
-        return;
-    }
-    vert->x = 0.0;
-    vert->y = 0.0;
     m_Add(emitable->vel, &emitable->pos);
-    m_Translate(emitable->pos, vert);
-    emitable->lifeTicks--;
 }
 
 static void initObjects(void)
@@ -173,7 +148,7 @@ static void initObjects(void)
         }
 
         w_Objects[i].angVel = angVel;
-        w_Geos[i].vertCount    = vertCount;
+        w_Geos[i].vertCount = vertCount;
 
         updateObjectGeo(i);
     }
@@ -210,11 +185,67 @@ static void swapObject(int a, int b)
     w_Colliders[b] = tempCol;
 }
 
+static void physicsUpdate(void)
+{
+    const int objectCount = w_ObjectCount;
+    const int emitableCount = w_EmitableCount;
+    for (int i = 0; i < objectCount; i++) 
+    {
+        updateObject(i);
+    }
+    for (int i = 0; i < emitableCount; i++) 
+    {
+        updateEmitable(i);
+    }
+}
+
+static void collisionsUpdate(void)
+{
+    w_DetectCollisions();
+}
+
+static void reap(void)
+{
+    const int objCount = w_ObjectCount;
+    const int emtCount = w_EmitableCount;
+    int deadObject = -1;
+    for (int i = 0; i < objCount; i++) 
+    {
+        if (w_Objects[i].destroyed)
+        {
+            //destroyObject(i);
+            deadObject = i;
+            break;
+        }
+    }
+    if (deadObject != -1)
+    {
+        swapObject(deadObject, --w_ObjectCount);
+        assert(w_ObjectCount >= 0);
+    }
+    int deadEmit = -1;
+    for (int i = 0; i < emtCount; i++) 
+    {
+        W_Emitable* emitable = &w_Emitables[i];
+        emitable->lifeTicks--;
+        if (w_Emitables[i].lifeTicks <= 0)
+        {
+            deadEmit = i;
+        }
+    }
+    if (deadEmit != -1)
+    {
+        swapEmit(deadEmit, --w_EmitableCount);
+        assert( w_EmitableCount >= 0 );
+    }
+}
+
 void w_DetectCollisions(void)
 {
     HitInfo hi = w_DetectBulletObjectCols();
     if (hi.collision)
     {
+        printf("HIT!\n");
         w_Emitables[hi.object1].lifeTicks = 0;
         w_Objects[hi.object2].destroyed = true;
     }
@@ -229,38 +260,28 @@ void w_Init(void)
 void w_Update(void)
 {
     updatePlayer();
-    const int objectCount = w_ObjectCount;
-    const int emitableCount = w_EmitableCount;
-    int deadObject = -1;
-    for (int i = 0; i < objectCount; i++) 
+    physicsUpdate();
+    collisionsUpdate();
+    reap();
+    r_WaitOnQueueSubmit();
+    w_UpdateDrawables();
+}
+
+void w_UpdateDrawables(void)
+{
+    const int objCount = w_ObjectCount;
+    const int emtCount = w_EmitableCount;
+    for (int i = 0; i < objCount; i++) 
     {
-        if (w_Objects[i].destroyed)
-        {
-            //destroyObject(i);
-            deadObject = i;
-            break;
-        }
-        updateObject(i);
+        resetObjectGeo(i);
+        updateObjectGeo(i);
     }
-    if (deadObject != -1)
+    for (int i = 0; i < emtCount; i++) 
     {
-        swapObject(deadObject, --w_ObjectCount);
-        assert(w_ObjectCount >= 0);
-    }
-    int deadEmit = -1;
-    for (int i = 0; i < emitableCount; i++) 
-    {
-        updateEmitable(i);
-        // check for dead. for now we assume only one dead per frame. 
-        // this is wrong, but keeps things simple. the less than equals
-        // is so that we can clean up possible errors on subsequent frames
-        if (w_Emitables[i].lifeTicks <= 0)
-            deadEmit = i;
-    }
-    if (deadEmit != -1)
-    {
-        swapEmit(deadEmit, --w_EmitableCount);
-        assert( w_EmitableCount >= 0 );
+        Vertex* vert = &w_EmitableVertexBuffer[i];
+        vert->x = 0.0;
+        vert->y = 0.0;
+        m_Translate(w_Emitables[i].pos, vert);
     }
 }
 

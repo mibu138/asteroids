@@ -16,6 +16,7 @@
 jmp_buf exit_game;
 
 #define NS_TARGET 16666666 // 1 / 60 seconds
+//#define NS_TARGET 500000000
 #define NS_PER_S  1000000000
 
 int main(int argc, char *argv[])
@@ -53,11 +54,9 @@ int main(int argc, char *argv[])
         i_GetEvents();
         i_ProcessEvents();
         g_Update();
-        w_DetectCollisions();
         // because we will directly modify gpu mapped
         // memory in the world update, we must ensure
         // the previous frame is done reading from it
-        r_WaitOnQueueSubmit(); 
         w_Update();
         r_RequestFrame();
         r_UpdateRenderCommands();
