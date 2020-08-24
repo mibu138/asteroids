@@ -102,7 +102,7 @@ static void updateEmitable(const int index)
 
 static void initObjects(void)
 {
-    w_ObjectCount = 15;
+    w_ObjectCount = 20;
     w_ObjectVertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
     w_ObjectVertexBuffer = (Vertex*)w_ObjectVertexBlock->address;
     //w_ObjectIndexBlock  = z_RequestBlock(
@@ -245,7 +245,6 @@ void w_DetectCollisions(void)
     HitInfo hi = w_DetectBulletObjectCols();
     if (hi.collision)
     {
-        printf("HIT!\n");
         w_Emitables[hi.object1].lifeTicks = 0;
         w_Objects[hi.object2].destroyed = true;
     }
