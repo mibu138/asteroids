@@ -56,6 +56,9 @@ void i_GetEvents(void)
         {
             case XCB_KEY_PRESS: 
                 {
+                xcb_key_press_event_t* xPress = (xcb_key_press_event_t*)xEvent;
+                printf("Press: time: %d\n", xPress->time);
+
                 event.type = i_Keydown; 
                 I_EventData keyCode = getKeyCode((xcb_key_press_event_t*)xEvent);
                 if (keyCode == 0) goto end;
@@ -70,6 +73,9 @@ void i_GetEvents(void)
                 // result in the same thing, and wheter it is worthwhile 
                 // accounting for that
                 {
+                xcb_key_press_event_t* xPress = (xcb_key_press_event_t*)xEvent;
+                printf("Release: time: %d\n", xPress->time);
+
                 event.type = i_Keyup;
                 I_EventData keyCode = getKeyCode((xcb_key_press_event_t*)xEvent);
                 if (keyCode == 0) goto end;

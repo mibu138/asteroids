@@ -28,11 +28,13 @@ void m_Rotate(const float angle /* radians */, Vec2*);
 void m_Translate(const Vec2 t, Vec2*);
 void m_Scale(const float scale, Vec2*);
 void m_Add(const Vec2, Vec2*);
+Vec2 m_Subtract(const Vec2, const Vec2);
 //returns a random float between 0 and 1
 float m_Rand(void); 
 //returns a random float between -1 and 1
 float m_RandNeg(void); 
 float m_Length(const Vec2);
 float m_Length2(const Vec2);
+float m_Determinant(const Mat2);
 
 #endif /* end of include guard: M_MATH_H */

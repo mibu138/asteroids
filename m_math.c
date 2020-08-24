@@ -50,6 +50,14 @@ void m_Add(const Vec2 v1, Vec2* v2)
     v2->y += v1.y;
 }
 
+Vec2 m_Subtract(const Vec2 v1, const Vec2 v2)
+{
+    Vec2 v;
+    v.x = v1.x - v2.x;
+    v.y = v1.y - v2.y;
+    return v;
+}
+
 float m_Rand(void)
 {
     return rand() / (float)RAND_MAX;
@@ -61,4 +69,7 @@ float m_RandNeg(void)
     return r * 2 - 1;
 }
 
-
+float m_Determinant(const Mat2 m)
+{
+    return m.x00 * m.x11 - m.x10 * m.x01;
+}

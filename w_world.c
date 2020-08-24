@@ -127,7 +127,7 @@ static void updateEmitable(const int index)
 
 static void initObjects(void)
 {
-    w_ObjectCount = 10;
+    w_ObjectCount = 15;
     w_ObjectVertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
     w_ObjectVertexBuffer = (Vertex*)w_ObjectVertexBlock->address;
     //w_ObjectIndexBlock  = z_RequestBlock(
@@ -148,7 +148,7 @@ static void initObjects(void)
         if (i == 0) //is player
         {
             vertCount= 4;
-            float r = 0.075;
+            float r = 0.05;
             verts[0] = (Vec2){0.0, -r};
             verts[1] = (Vec2){-r/2, r/2};
             verts[2] = (Vec2){r/2, r/2};
@@ -156,18 +156,18 @@ static void initObjects(void)
             angVel = 0.0;
             w_Objects[i].drag = 0.4;
             w_Objects[i].angDrag = 0.1;
-            w_Colliders[i].radius = r;
+            w_Colliders[i].radius = r*2;
         }
         else
         {
             vertCount = 5;
-            float r = 0.1 + i * .01;
+            float r = 0.05 + i * .01;
             verts[0] = (Vec2){r, r};
             verts[1] = (Vec2){-r, r};
             verts[2] = (Vec2){-r, -r};
             verts[3] = (Vec2){r, -r};
             verts[4] = (Vec2){r, r};
-            w_Colliders[i].radius = r;
+            w_Colliders[i].radius = r*2;
             w_Objects[i].vel.x = m_RandNeg() * INIT_SPEED;
             w_Objects[i].vel.y = m_RandNeg() * INIT_SPEED;
         }

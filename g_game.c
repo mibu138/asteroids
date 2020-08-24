@@ -91,7 +91,7 @@ void g_Update(void)
         beam->lifeTicks = 100;
         beam->pos = player.object->pos;
         Vec2 dir = frontDir;
-        m_Scale(0.03, &dir);
+        m_Scale(0.02, &dir);
         m_Rotate(player.object->angle, &dir);
         beam->vel = dir;
         fire = false;
