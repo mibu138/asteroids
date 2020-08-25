@@ -24,7 +24,9 @@ typedef struct {
 
 typedef enum {
     BIG,
-    SMALL
+    SMALL,
+    TINY,
+    FINAL,
 } AstStage;
 
 typedef struct {

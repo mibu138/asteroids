@@ -105,6 +105,11 @@ static void initObjects(void)
     w_ObjectVertexBuffer = (Vertex*)w_ObjectVertexBlock->address;
     //w_ObjectIndexBlock  = z_RequestBlock(
     assert(w_ObjectCount <= W_MAX_OBJ);
+    for (int i = 0; i < W_MAX_OBJ; i++) 
+    {
+        w_Geos[i].vertCount = MAX_VERTS_PER_OBJ;
+        w_Geos[i].vertIndex = i * MAX_VERTS_PER_OBJ;
+    }
     for (int i = 0; i < w_ObjectCount; i++) 
     {
         float angVel =  0.01 * m_Rand();
@@ -197,11 +202,12 @@ static void initAsteroid(W_Object* obj)
 
 static void spawnChildren()
 {
-    const int childCount = 1;
+    const int childCount = 4;
     const int objCount = w_ObjectCount;
     assert(childCount + objCount < W_MAX_OBJ);
     const Vec2 basePos = w_Objects[objCount].pos;
     const Vec2 baseVel = w_Objects[objCount].vel;
+    const AstStage baseStage = w_Objects[objCount].stage;
     const float baseAngVel = w_Objects[objCount].angVel;
     const float baseRadius = w_Colliders[objCount].radius / 4;
     for (int i = objCount; i < objCount + childCount; i++) 
@@ -209,13 +215,11 @@ static void spawnChildren()
         W_Object* obj = &w_Objects[i];          
         initAsteroid(obj);
         obj->angle = m_Rand() * M_PI * 2;
-        obj->stage = SMALL;
+        obj->stage = baseStage + 1;
         Vec2 vel = {INIT_SPEED / 2, 0};
         m_Rotate(i, &vel);
         //m_Add(baseVel, &vel);
         obj->vel = vel;
-        obj->vel = (Vec2){0.0, 0.0};
-        //obj->pos = (Vec2){0.0, 0.0};
         obj->pos = basePos;
         obj->angVel = baseAngVel;
         w_GenerateAsteroidRand1(i, baseRadius);
@@ -241,7 +245,7 @@ static void reapAndSpawn(void)
     {
         swapObject(deadObject, --w_ObjectCount);
         assert(w_ObjectCount >= 0);
-        if (w_Objects[w_ObjectCount].stage == BIG)
+        if (w_Objects[w_ObjectCount].stage < FINAL)
             spawnChildren();
     }
     int deadEmit = -1;

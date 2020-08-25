@@ -4,8 +4,6 @@
 
 void w_GeneratePlayerShip(const int i)
 {
-    w_Geos[i].vertIndex = i * MAX_VERTS_PER_OBJ;
-    w_Geos[i].vertCount = 4;
     Vertex* verts = w_ObjectVertexBuffer + w_Geos[i].vertIndex;
     
     float r = 0.05;
@@ -34,8 +32,6 @@ void w_GenerateAsteroidSquare(const int id)
 void w_GenerateAsteroidRand1(const int id, const float radius)
 {
     const int vc = MAX_VERTS_PER_OBJ;
-    w_Geos[id].vertIndex = id * MAX_VERTS_PER_OBJ;
-    w_Geos[id].vertCount = vc;
     Vertex* verts = w_ObjectVertexBuffer + w_Geos[id].vertIndex;
 
     for (int i = 0; i < vc - 1; i++) 
