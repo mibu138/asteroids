@@ -27,11 +27,56 @@ static bool raySegmentIntersect(Ray ray, Segment segment)
     return true;
 }
 
+static bool segmentIntersect(Segment seg1, Segment seg2)
+{
+    const Vec2 v1 = m_Subtract(seg1.A, seg2.A);
+    const Vec2 d1 = m_Subtract(seg1.B, seg1.A);
+    const Vec2 d2 = m_Subtract(seg2.B, seg2.A);
+    const Mat2 m1 = {
+        v1.x, d2.x,
+        v1.y, d2.y
+    };
+    const Mat2 m2 = {
+        v1.x, d1.x,
+        v1.y, d1.y
+    };
+    const Mat2 m3 = {
+        d2.x, d1.x,
+        d2.y, d1.y
+    };
+    const float denom = m_Determinant(m3);
+    if (denom == 0) return false;
+    const float t1 = m_Determinant(m1) / denom;
+    const float t2 = m_Determinant(m2) / denom;
+    if (t1 < 0 || t1 > 1) return false;
+    if (t2 < 0 || t2 > 1) return false;
+    return true;
+}
+
 static bool pointInCircle(Vec2 point, Vec2 center, const float radius)
 {
     m_Scale(-1, &center);
     m_Translate(center, &point);
     return (m_Length2(point) < radius * radius);
+}
+
+static bool segmentCrossGeo(const Vec2 endPoint, const Vec2 startPoint, const Geo geo)
+{
+    const Vertex* verts = &w_ObjectVertexBuffer[geo.vertIndex];
+    Segment segmentA = {
+        .A = startPoint,
+        .B = endPoint
+    };
+    for (int i = 0; i < geo.vertCount - 1; i++) 
+    {
+        Segment segmentB = {
+            .A = verts[i],
+            .B = verts[i+1]
+        };
+        if (segmentIntersect(segmentA, segmentB))
+            return true;
+    }
+    return false;
 }
 
 static bool pointInGeo(const Vec2 point, const Geo geo)
@@ -61,7 +106,7 @@ static bool emitInObject(int emitId, int objId)
     if (pointInCircle(w_Emitables[emitId].pos, 
                 w_Objects[objId].pos, 
                 w_Colliders[objId].radius))
-        return (pointInGeo(w_Emitables[emitId].pos, w_Geos[objId]));
+        return (segmentCrossGeo(w_Emitables[emitId].pos, w_Emitables[emitId].prevPos, w_Geos[objId]));
     return false;
 }
 

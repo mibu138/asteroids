@@ -95,6 +95,7 @@ static void updateEmitable(const int index)
 {
     assert( index >= 0 );
     W_Emitable* emitable = &w_Emitables[index];
+    emitable->prevPos = emitable->pos;
     m_Add(emitable->vel, &emitable->pos);
 }
 

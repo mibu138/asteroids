@@ -49,6 +49,7 @@ typedef struct {
     Vec2    pos;
     Vec2    vel;
     int     lifeTicks;
+    Vec2    prevPos;
 } W_Emitable;
 
 extern int        w_ObjectCount;
