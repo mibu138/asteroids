@@ -16,6 +16,7 @@ DEPS =                 \
 		m_math.h       \
 		w_world.h      \
 		w_collision.h  \
+		w_create.h     \
 		z_memory.h     \
 		i_input.h      \
 		utils.h        \
@@ -30,6 +31,7 @@ OBJS = 					    \
 		$(O)/m_math.o       \
 		$(O)/w_world.o      \
 		$(O)/w_collision.o  \
+		$(O)/w_create.o     \
 		$(O)/z_memory.o     \
 		$(O)/i_input.o      \
 		$(O)/utils.o

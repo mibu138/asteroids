@@ -73,3 +73,12 @@ float m_Determinant(const Mat2 m)
 {
     return m.x00 * m.x11 - m.x10 * m.x01;
 }
+
+Vec2 m_PolarToCart(const float angle, const float radius)
+{
+    Vec2 v = {
+        cos(angle) * radius,
+        sin(angle) * radius
+    };
+    return v;
+}

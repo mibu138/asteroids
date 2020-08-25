@@ -41,9 +41,9 @@ int main(int argc, char *argv[])
     struct timespec diffTime = {0, 0};
     struct timespec remTime = {0, 0}; // this is just if we get signal interupted
 
-    uint64_t frameCount = 0;
-    uint64_t nsTotal    = 0;
-    unsigned long nsDelta    = 0;
+    uint64_t frameCount   = 0;
+    uint64_t nsTotal      = 0;
+    unsigned long nsDelta = 0;
 
     while( 1 ) 
     {

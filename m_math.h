@@ -36,5 +36,6 @@ float m_RandNeg(void);
 float m_Length(const Vec2);
 float m_Length2(const Vec2);
 float m_Determinant(const Mat2);
+Vec2  m_PolarToCart(const float angle, const float radius);
 
 #endif /* end of include guard: M_MATH_H */

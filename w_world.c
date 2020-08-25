@@ -1,4 +1,6 @@
 #include "w_world.h"
+#include "m_math.h"
+#include "w_create.h"
 #include "z_memory.h"
 #include "r_render.h"
 #include "w_collision.h"
@@ -6,10 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-
-#define MAX_VERTS_PER_OBJ   16
-#define MAX_INDICES_PER_OBJ 16
-#define INIT_SPEED 0.005
 
 int        w_ObjectCount;
 int        w_EmitableCount;
@@ -102,7 +100,7 @@ static void updateEmitable(const int index)
 
 static void initObjects(void)
 {
-    w_ObjectCount = 20;
+    w_ObjectCount = 5;
     w_ObjectVertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
     w_ObjectVertexBuffer = (Vertex*)w_ObjectVertexBlock->address;
     //w_ObjectIndexBlock  = z_RequestBlock(
@@ -115,40 +113,23 @@ static void initObjects(void)
         w_Objects[i].pos   = (Vec2){tx, ty};
         w_Objects[i].mass  = 1.0;
         w_Objects[i].angle = i;
-        w_Geos[i].vertIndex = i * MAX_VERTS_PER_OBJ;
-
-        Vertex* verts = w_ObjectVertexBuffer + w_Geos[i].vertIndex;
-        int     vertCount;
+        w_Objects[i].stage = BIG;
 
         if (i == 0) //is player
         {
-            vertCount= 4;
-            float r = 0.05;
-            verts[0] = (Vec2){0.0, -r};
-            verts[1] = (Vec2){-r/2, r/2};
-            verts[2] = (Vec2){r/2, r/2};
-            verts[3] = (Vec2){0.0, -r};
+            w_GeneratePlayerShip(i);
             angVel = 0.0;
             w_Objects[i].drag = 0.4;
             w_Objects[i].angDrag = 0.1;
-            w_Colliders[i].radius = r*2;
         }
         else
         {
-            vertCount = 5;
-            float r = 0.05 + i * .01;
-            verts[0] = (Vec2){r, r};
-            verts[1] = (Vec2){-r, r};
-            verts[2] = (Vec2){-r, -r};
-            verts[3] = (Vec2){r, -r};
-            verts[4] = (Vec2){r, r};
-            w_Colliders[i].radius = r*2;
+            w_GenerateAsteroidRand1(i, 0.06);
             w_Objects[i].vel.x = m_RandNeg() * INIT_SPEED;
             w_Objects[i].vel.y = m_RandNeg() * INIT_SPEED;
         }
 
         w_Objects[i].angVel = angVel;
-        w_Geos[i].vertCount = vertCount;
 
         updateObjectGeo(i);
     }
@@ -204,7 +185,45 @@ static void collisionsUpdate(void)
     w_DetectCollisions();
 }
 
-static void reap(void)
+static void initAsteroid(W_Object* obj)
+{
+    // only need to explicitly set what should be non-zero
+    W_Object newObj = {
+        .mass = 1.0,
+        .destroyed = false,
+    };
+    *obj = newObj;
+}
+
+static void spawnChildren()
+{
+    const int childCount = 1;
+    const int objCount = w_ObjectCount;
+    assert(childCount + objCount < W_MAX_OBJ);
+    const Vec2 basePos = w_Objects[objCount].pos;
+    const Vec2 baseVel = w_Objects[objCount].vel;
+    const float baseAngVel = w_Objects[objCount].angVel;
+    const float baseRadius = w_Colliders[objCount].radius / 4;
+    for (int i = objCount; i < objCount + childCount; i++) 
+    {
+        W_Object* obj = &w_Objects[i];          
+        initAsteroid(obj);
+        obj->angle = m_Rand() * M_PI * 2;
+        obj->stage = SMALL;
+        Vec2 vel = {INIT_SPEED / 2, 0};
+        m_Rotate(i, &vel);
+        //m_Add(baseVel, &vel);
+        obj->vel = vel;
+        obj->vel = (Vec2){0.0, 0.0};
+        //obj->pos = (Vec2){0.0, 0.0};
+        obj->pos = basePos;
+        obj->angVel = baseAngVel;
+        w_GenerateAsteroidRand1(i, baseRadius);
+    }
+    w_ObjectCount += childCount;
+}
+
+static void reapAndSpawn(void)
 {
     const int objCount = w_ObjectCount;
     const int emtCount = w_EmitableCount;
@@ -222,6 +241,8 @@ static void reap(void)
     {
         swapObject(deadObject, --w_ObjectCount);
         assert(w_ObjectCount >= 0);
+        if (w_Objects[w_ObjectCount].stage == BIG)
+            spawnChildren();
     }
     int deadEmit = -1;
     for (int i = 0; i < emtCount; i++) 
@@ -261,8 +282,8 @@ void w_Update(void)
     updatePlayer();
     physicsUpdate();
     collisionsUpdate();
-    reap();
     r_WaitOnQueueSubmit();
+    reapAndSpawn();
     w_UpdateDrawables();
 }
 

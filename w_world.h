@@ -6,6 +6,9 @@
 
 #define W_MAX_OBJ  128
 #define W_MAX_EMIT 32
+#define MAX_VERTS_PER_OBJ   16
+#define MAX_INDICES_PER_OBJ 16
+#define INIT_SPEED 0.005
 
 typedef Vec2      Vertex;
 typedef uint32_t  Index;
@@ -18,6 +21,11 @@ typedef struct {
 typedef struct {
     float radius;
 } Collider;
+
+typedef enum {
+    BIG,
+    SMALL
+} AstStage;
 
 typedef struct {
     Vec2      pos;
@@ -32,6 +40,7 @@ typedef struct {
     float     angDrag;
     float     mass;
     bool      destroyed;
+    AstStage  stage;
 } W_Object;
 
 typedef struct {
