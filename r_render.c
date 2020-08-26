@@ -15,6 +15,9 @@
 VkDevice device;
 VkPhysicalDevice physicalDevice;
 VkRenderPass swapchainRenderPass;
+VkRenderPass offscreenRenderPass;
+
+FrameBuffer offscreenFrameBuffer;
 
 static VkInstance       instance;
 static VkSurfaceKHR     surface;
@@ -443,7 +446,7 @@ static void initQueues(void)
 
 static void initRenderPasses(void)
 {
-    const VkAttachmentDescription attachment = {
+    VkAttachmentDescription attachment = {
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
         .format = swapFormat,
@@ -474,7 +477,7 @@ static void initRenderPasses(void)
         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
     };
 
-    const VkRenderPassCreateInfo ci = {
+    VkRenderPassCreateInfo ci = {
         .subpassCount = 1,
         .pSubpasses = &subpass,
         .attachmentCount = 1,
@@ -485,6 +488,56 @@ static void initRenderPasses(void)
     };
 
     VkResult r = vkCreateRenderPass(device, &ci, NULL, &swapchainRenderPass);
+    assert( VK_SUCCESS == r );
+
+    attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    r = vkCreateRenderPass(device, &ci, NULL, &offscreenRenderPass);
+    assert( VK_SUCCESS == r );
+}
+
+static void initOffscreenFrameBuffer(void)
+{
+    VkImageCreateInfo imageInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .extent = {WINDOW_WIDTH, WINDOW_HEIGHT, 1},
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 1,
+        .pQueueFamilyIndices = &graphicsQueueFamilyIndex,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
+
+    VkResult r;
+
+    r = vkCreateImage(device, &imageInfo, NULL, &offscreenFrameBuffer.image.handle);
+    assert( VK_SUCCESS == r );
+
+    VkMemoryRequirements memReqs;
+    vkGetImageMemoryRequirements(device, offscreenFrameBuffer.image.handle, &memReqs);
+
+    VkImageViewCreateInfo viewInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = offscreenFrameBuffer.image.handle,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .components = {0, 0, 0, 0}, // no swizzling
+        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
+
+    r = vkCreateImageView(device, &viewInfo, NULL, &offscreenFrameBuffer.image.view);
     assert( VK_SUCCESS == r );
 }
 
@@ -508,6 +561,8 @@ static void initFrameBuffers(void)
         r = vkCreateFramebuffer(device, &ci, NULL, &frames[i].frameBuffer);
         assert( VK_SUCCESS == r );
     }
+
+    initOffscreenFrameBuffer();
 }
 
 void r_Init(void)
@@ -591,6 +646,7 @@ void r_CleanUp(void)
         
     cleanUpPipelines();
     vkDestroyRenderPass(device, swapchainRenderPass, NULL);
+    vkDestroyRenderPass(device, offscreenRenderPass, NULL);
     for (int i = 0; i < FRAME_COUNT; i++) 
     {
         vkDestroyFence(device, frames[i].fence, NULL);

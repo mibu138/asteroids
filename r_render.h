@@ -6,9 +6,22 @@ r_render.c
 
 #define VK_USE_PLATFORM_XCB_KHR
 #define MAX_PIPELINES 4
+#define MAX_DESCRIPTOR_SETS 2
 #define FRAME_COUNT 2
 
 #include <vulkan/vulkan.h>
+
+typedef struct {
+    VkImage         handle;
+    VkImageView     view;
+    VkSampler       sampler;
+} Image;
+
+typedef struct {
+    VkFramebuffer   handle;
+    Image           image;
+    VkRenderPass*   pRenderPass;
+} FrameBuffer;
 
 typedef struct frame {
     VkCommandPool   commandPool;
@@ -28,8 +41,6 @@ extern VkPipeline pipelines[MAX_PIPELINES];
 extern VkRenderPass swapchainRenderPass;
 extern Frame frames[FRAME_COUNT];
 extern uint32_t curFrameIndex;
-
-enum r_PipelineType { R_PIPELINE_TYPE_SIMPLE }; // for indexing into the pipelines array
 
 void   r_Init(void);
 void   r_WaitOnQueueSubmit(void);

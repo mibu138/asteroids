@@ -5,56 +5,41 @@
 #include <assert.h>
 #include <vulkan/vulkan_core.h>
 
-VkPipeline pipelines[MAX_PIPELINES];
-static VkPipelineLayout pipelineLayout;
-static VkDescriptorSetLayout descriptorSetLayout; // no descriptors yet
+VkPipeline      pipelines[MAX_PIPELINES];
+VkDescriptorSet descriptorSets[MAX_DESCRIPTOR_SETS];
+static VkPipelineLayout pipelineLayoutGeometry;
+static VkPipelineLayout pipelineLayoutPostProcess;
+static VkDescriptorSetLayout descriptorSetLayoutEmpty; 
+static VkDescriptorSetLayout descriptorSetLayoutPostProcess; 
+static VkDescriptorPool      descriptorPool;
 
 enum shaderStageType { VERT, FRAG };
 
-#define PIPELINE_COUNT 2
+#define PIPELINE_COUNT 3
+#define DESCRIPTOR_SET_COUNT 1
 
-static void initShaderModules(VkShaderModule* vertModule, VkShaderModule* fragModule) 
+static void initShaderModule(const char* filepath, VkShaderModule* module)
 {
     VkResult r;
-
     int fr;
     FILE* fp;
-    fp = fopen("shaders/spv/simple-vert.spv", "rb");
+    fp = fopen(filepath, "rb");
     fr = fseek(fp, 0, SEEK_END);
     assert( fr == 0 ); // success 
-    size_t vertCodeSize = ftell(fp);
+    size_t codeSize = ftell(fp);
     rewind(fp);
 
-    unsigned char vertCode[vertCodeSize];
-    fread(vertCode, 1, vertCodeSize, fp);
+    unsigned char code[codeSize];
+    fread(code, 1, codeSize, fp);
     fclose(fp);
 
-    fp = fopen("shaders/spv/simple-frag.spv", "rb");
-    assert( fp );
-    fr = fseek(fp, 0, SEEK_END);
-    assert( fr == 0 ); // success 
-    size_t fragCodeSize = ftell(fp);
-    rewind(fp);
-
-    unsigned char fragCode[fragCodeSize];
-    fread(fragCode, 1, fragCodeSize, fp);
-    fclose(fp);
-
-    const VkShaderModuleCreateInfo vertShaderInfo = {
+    const VkShaderModuleCreateInfo shaderInfo = {
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-        .codeSize = vertCodeSize,
-        .pCode = (uint32_t*)vertCode,
+        .codeSize = codeSize,
+        .pCode = (uint32_t*)code,
     };
 
-    const VkShaderModuleCreateInfo fragShaderInfo = {
-        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-        .codeSize = fragCodeSize,
-        .pCode = (uint32_t*)fragCode,
-    };
-
-    r = vkCreateShaderModule(device, &vertShaderInfo, NULL, vertModule);
-    assert( VK_SUCCESS == r );
-    r = vkCreateShaderModule(device, &fragShaderInfo, NULL, fragModule);
+    r = vkCreateShaderModule(device, &shaderInfo, NULL, module);
     assert( VK_SUCCESS == r );
 }
 
@@ -68,25 +53,68 @@ void initDescriptorSets(void)
         .pBindings = NULL
     };
 
-    r = vkCreateDescriptorSetLayout(device, &layoutInfo, NULL, &descriptorSetLayout);
+    r = vkCreateDescriptorSetLayout(device, &layoutInfo, NULL, &descriptorSetLayoutEmpty);
     assert( VK_SUCCESS == r );
-    // no descriptor sets right now
+
+    VkDescriptorSetLayoutBinding textureBinding = {
+        .binding = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = NULL, // no one really seems to use these
+    };
+
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &textureBinding;
+
+    r = vkCreateDescriptorSetLayout(device, &layoutInfo, NULL, &descriptorSetLayoutPostProcess);
+    assert( VK_SUCCESS == r );
+
+    VkDescriptorPoolSize poolSize = {
+        .descriptorCount = 1,
+        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+    };
+
+    VkDescriptorPoolCreateInfo poolInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .maxSets = 1,
+        .poolSizeCount = 1,
+        // odd name. not the sizes of pools, but the numbers of descriptors
+        // of a certain type that can be created from the pool
+        .pPoolSizes = &poolSize, 
+    };
+
+    vkCreateDescriptorPool(device, &poolInfo, NULL, &descriptorPool);
+
+    VkDescriptorSetAllocateInfo allocInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = DESCRIPTOR_SET_COUNT,
+        .pSetLayouts = &descriptorSetLayoutPostProcess,
+    };
+
+    vkAllocateDescriptorSets(device, &allocInfo, descriptorSets);
 }
 
 static void initPipelineLayouts(void)
 {
     VkResult r;
-    const VkPipelineLayoutCreateInfo info = {
+    VkPipelineLayoutCreateInfo info = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .setLayoutCount = 1, // ?
-        .pSetLayouts = &descriptorSetLayout,
+        .pSetLayouts = &descriptorSetLayoutEmpty,
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL
     };
 
-    r = vkCreatePipelineLayout(device, &info, NULL, &pipelineLayout);
+    r = vkCreatePipelineLayout(device, &info, NULL, &pipelineLayoutGeometry);
+    assert( VK_SUCCESS == r );
+    
+    info.pSetLayouts = &descriptorSetLayoutPostProcess;
+
+    r = vkCreatePipelineLayout(device, &info, NULL, &pipelineLayoutPostProcess);
     assert( VK_SUCCESS == r );
 }
 
@@ -97,7 +125,8 @@ void initPipelines(void)
     VkShaderModule vertModule;
     VkShaderModule fragModule;
 
-    initShaderModules(&vertModule, &fragModule);
+    initShaderModule("shaders/spv/simple-vert.spv", &vertModule);
+    initShaderModule("shaders/spv/simple-frag.spv", &fragModule);
 
     const VkSpecializationInfo shaderSpecialInfo = {
         // TODO
@@ -212,7 +241,7 @@ void initPipelines(void)
         .basePipelineHandle = 0,
         .subpass = 0, // which subpass in the renderpass do we use this pipeline with
         .renderPass = swapchainRenderPass,
-        .layout = pipelineLayout,
+        .layout = pipelineLayoutGeometry,
         .pDynamicState = NULL,
         .pColorBlendState = &colorBlendState,
         .pDepthStencilState = NULL,
@@ -228,7 +257,9 @@ void initPipelines(void)
         .pInputAssemblyState = &inputAssembly,
     };
 
+    // ----------------------------------------------------------
     // creating the second pipeline info for the emitables
+    // ----------------------------------------------------------
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyEmit = inputAssembly;
     inputAssemblyEmit.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
@@ -240,14 +271,50 @@ void initPipelines(void)
     emitablePipelineInfo.pRasterizationState = &rasterizationStateEmit;
     emitablePipelineInfo.pInputAssemblyState = &inputAssemblyEmit;
 
-    VkGraphicsPipelineCreateInfo infos[PIPELINE_COUNT] = {pipelineInfo, emitablePipelineInfo};
+    // ----------------------------------------------------------
+    // creating the third pipeline info for post processing
+    // ----------------------------------------------------------
+
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyPostProc = inputAssembly;
+    inputAssemblyPostProc.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+    VkPipelineRasterizationStateCreateInfo rasterizationStatePostProc = rasterizationState;
+    rasterizationStatePostProc.polygonMode = VK_POLYGON_MODE_FILL;
+
+    const VkPipelineVertexInputStateCreateInfo postProcInputState = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexAttributeDescriptionCount = 0,
+        .vertexBindingDescriptionCount = 0,
+    };
+
+    VkShaderModule postProcVertModule;
+
+    initShaderModule("shaders/spv/postproc-vert.spv", &postProcVertModule);
+
+    VkPipelineShaderStageCreateInfo postProcShaderStages[2] = {shaderStages[0], shaderStages[1]};
+    postProcShaderStages[0].module = postProcVertModule;
+    
+    // ----------------------------------------------------------
+    // ----------------------------------------------------------
+
+    VkGraphicsPipelineCreateInfo postProcPipelineInfo = pipelineInfo;
+    postProcPipelineInfo.pRasterizationState = &rasterizationStatePostProc;
+    postProcPipelineInfo.pInputAssemblyState = &inputAssemblyPostProc;
+    postProcPipelineInfo.pVertexInputState = &postProcInputState;
+    postProcPipelineInfo.pStages           = postProcShaderStages;
+    postProcPipelineInfo.layout            = pipelineLayoutPostProcess;
+
+    VkGraphicsPipelineCreateInfo infos[PIPELINE_COUNT] = {pipelineInfo, emitablePipelineInfo, postProcPipelineInfo};
 
     vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, PIPELINE_COUNT, infos, NULL, pipelines);
 
     vkDestroyShaderModule(device, vertModule, NULL);
     vkDestroyShaderModule(device, fragModule, NULL);
-    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, NULL);
-    vkDestroyPipelineLayout(device, pipelineLayout, NULL);
+    vkDestroyShaderModule(device, postProcVertModule, NULL);
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayoutEmpty, NULL);
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayoutPostProcess, NULL);
+    vkDestroyPipelineLayout(device, pipelineLayoutGeometry, NULL);
+    vkDestroyPipelineLayout(device, pipelineLayoutPostProcess, NULL);
 }
 
 void cleanUpPipelines()
@@ -256,5 +323,6 @@ void cleanUpPipelines()
     {
         vkDestroyPipeline(device, pipelines[i], NULL);
     }
+    vkDestroyDescriptorPool(device, descriptorPool, NULL);
 }
 

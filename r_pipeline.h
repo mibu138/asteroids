@@ -5,7 +5,7 @@
 
 extern VkPipeline pipelines[MAX_PIPELINES];
 
-enum {r_ObjPipeId, r_EmitPipeId};
+enum {R_OBJ_PIPELINE, R_EMIT_PIPELINE, R_POST_PROC_PIPELINE};
 
 void initDescriptorSets(void);
 void initPipelines(void);

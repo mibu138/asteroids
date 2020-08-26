@@ -34,8 +34,6 @@ int main(int argc, char *argv[])
     i_Init();
     printf("Input initialized\n");
 
-    printWorld();
-
     struct timespec startTime = {0, 0};
     struct timespec endTime = {0, 0};
     struct timespec diffTime = {0, 0};

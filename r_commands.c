@@ -38,7 +38,7 @@ void r_UpdateRenderCommands(void)
 
     vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[r_ObjPipeId]);
+    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[R_OBJ_PIPELINE]);
 
     VkDeviceSize vertBufferOffset = w_ObjectVertexBlock->vOffset; 
 
@@ -51,7 +51,7 @@ void r_UpdateRenderCommands(void)
         vkCmdDraw(frame->commandBuffer, w_Geos[i].vertCount, 1, w_Geos[i].vertIndex, 0);
     }
 
-    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[r_EmitPipeId]);
+    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[R_EMIT_PIPELINE]);
 
     VkDeviceSize emitVertBufferOffset = w_EmitableVertexBlock->vOffset;
 
@@ -59,6 +59,10 @@ void r_UpdateRenderCommands(void)
 
     if (w_EmitableCount)
         vkCmdDraw(frame->commandBuffer, w_EmitableCount, 1, 0, 0);
+
+//    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[R_POST_PROC_PIPELINE]);
+//
+//    vkCmdDraw(frame->commandBuffer, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(frame->commandBuffer);
 

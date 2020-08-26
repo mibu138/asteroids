@@ -36,9 +36,10 @@ OBJS = 					    \
 		$(O)/i_input.o      \
 		$(O)/utils.o
 
-SHADERS =                      \
-		$(SPV)/simple-vert.spv \
-		$(SPV)/simple-frag.spv \
+SHADERS =                         \
+		$(SPV)/simple-vert.spv    \
+		$(SPV)/simple-frag.spv    \
+		$(SPV)/postproc-vert.spv 
 
 debug: CFLAGS += -g -DVERBOSE=1
 debug: all
