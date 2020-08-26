@@ -1,9 +1,10 @@
 #include "d_display.h"
+#include "v_video.h"
 #include "m_math.h"
 #include "r_render.h"
 #include "r_commands.h"
 #include "g_game.h"
-#include "z_memory.h"
+#include "v_memory.h"
 #include "i_input.h"
 #include "utils.h"
 #include "def.h"
@@ -23,10 +24,10 @@ int main(int argc, char *argv[])
 {
     d_Init();
     printf("Display initialized.\n");
+    v_Init();
+    printf("Video device initialized\n");
     r_Init();
     printf("Renderer initialized.\n");
-    z_Init();
-    printf("Memory initialized.\n");
     w_Init();
     printf("World initialized.\n");
     g_Init();
@@ -84,7 +85,7 @@ int main(int argc, char *argv[])
     g_CleanUp();
     w_CleanUp();
     d_CleanUp();
-    z_CleanUp();
     r_CleanUp();
+    v_CleanUp();
     return 0;
 }

@@ -1,4 +1,6 @@
 #include "r_commands.h"
+#include "r_render.h"
+#include "v_video.h"
 #include "w_world.h"
 #include "r_pipeline.h"
 #include "def.h"

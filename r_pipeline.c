@@ -1,4 +1,6 @@
 #include "r_pipeline.h"
+#include "v_video.h"
+#include "r_render.h"
 #include "m_math.h"
 #include "def.h"
 #include <stdio.h>

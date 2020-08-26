@@ -1,7 +1,7 @@
 #include "w_world.h"
 #include "m_math.h"
 #include "w_create.h"
-#include "z_memory.h"
+#include "v_memory.h"
 #include "r_render.h"
 #include "w_collision.h"
 #include <stdio.h>
@@ -14,9 +14,9 @@ int        w_EmitableCount;
 W_Object   w_Objects[W_MAX_OBJ];
 W_Emitable w_Emitables[W_MAX_EMIT];
 Geo        w_Geos[W_MAX_OBJ];
-Z_block*   w_ObjectVertexBlock;
-Z_block*   w_ObjectIndexBlock;
-Z_block*   w_EmitableVertexBlock;
+V_block*   w_ObjectVertexBlock;
+V_block*   w_ObjectIndexBlock;
+V_block*   w_EmitableVertexBlock;
 Vertex*    w_ObjectVertexBuffer;
 Index*     w_ObjectIndexBuffer;
 Vertex*    w_EmitableVertexBuffer;
@@ -102,7 +102,7 @@ static void updateEmitable(const int index)
 static void initObjects(void)
 {
     w_ObjectCount = 5;
-    w_ObjectVertexBlock = z_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
+    w_ObjectVertexBlock = v_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
     w_ObjectVertexBuffer = (Vertex*)w_ObjectVertexBlock->address;
     //w_ObjectIndexBlock  = z_RequestBlock(
     assert(w_ObjectCount <= W_MAX_OBJ);
@@ -143,7 +143,7 @@ static void initObjects(void)
 
 static void initEmitables(void)
 {
-    w_EmitableVertexBlock = z_RequestBlock(W_MAX_EMIT * sizeof(Vertex));
+    w_EmitableVertexBlock = v_RequestBlock(W_MAX_EMIT * sizeof(Vertex));
     w_EmitableVertexBuffer = (Vertex*)w_EmitableVertexBlock->address;
 }
 

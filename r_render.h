@@ -5,11 +5,8 @@ r_render.c
 #define R_INIT_H
 
 #define VK_USE_PLATFORM_XCB_KHR
-#define MAX_PIPELINES 4
-#define MAX_DESCRIPTOR_SETS 2
-#define FRAME_COUNT 2
 
-#include <vulkan/vulkan.h>
+#include "v_def.h"
 
 typedef struct {
     VkImage         handle;
@@ -35,8 +32,6 @@ typedef struct frame {
     uint32_t        index;
 } Frame;
 
-extern VkDevice device;
-extern VkPhysicalDevice physicalDevice;
 extern VkPipeline pipelines[MAX_PIPELINES];
 extern VkRenderPass swapchainRenderPass;
 extern Frame frames[FRAME_COUNT];

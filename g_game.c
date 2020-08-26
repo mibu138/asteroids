@@ -1,6 +1,5 @@
 #include "m_math.h"
 #include "g_game.h"
-#include "r_render.h"
 #include "r_pipeline.h"
 #include "def.h"
 #include <assert.h>

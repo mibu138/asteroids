@@ -2,7 +2,7 @@
 #define W_WORLD_H
 
 #include "m_math.h"
-#include "z_memory.h"
+#include "v_memory.h"
 
 #define W_MAX_OBJ  128
 #define W_MAX_EMIT 32
@@ -56,8 +56,8 @@ extern int        w_EmitableCount;
 extern W_Object   w_Objects[W_MAX_OBJ];
 extern W_Emitable w_Emitables[W_MAX_EMIT];
 extern Geo        w_Geos[W_MAX_OBJ];
-extern Z_block*   w_ObjectVertexBlock;
-extern Z_block*   w_EmitableVertexBlock;
+extern V_block*   w_ObjectVertexBlock;
+extern V_block*   w_EmitableVertexBlock;
 extern Vertex*    w_ObjectVertexBuffer;
 extern Vertex*    w_EmitableVertexBuffer;
 extern Collider   w_Colliders[W_MAX_OBJ];

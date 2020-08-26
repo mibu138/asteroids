@@ -9,6 +9,9 @@ NAME = as
 
 DEPS =                 \
 		d_display.h    \
+		v_video.h      \
+		v_def.h        \
+		v_memory.h     \
 		r_render.h     \
 		r_commands.h   \
 		r_pipeline.h   \
@@ -17,13 +20,14 @@ DEPS =                 \
 		w_world.h      \
 		w_collision.h  \
 		w_create.h     \
-		z_memory.h     \
 		i_input.h      \
 		utils.h        \
 		def.h
 
 OBJS = 					    \
 		$(O)/d_display.o    \
+		$(O)/v_video.o      \
+		$(O)/v_memory.o     \
 		$(O)/r_render.o     \
 		$(O)/r_pipeline.o   \
 		$(O)/r_commands.o   \
@@ -32,7 +36,6 @@ OBJS = 					    \
 		$(O)/w_world.o      \
 		$(O)/w_collision.o  \
 		$(O)/w_create.o     \
-		$(O)/z_memory.o     \
 		$(O)/i_input.o      \
 		$(O)/utils.o
 

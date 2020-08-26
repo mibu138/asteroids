@@ -1,7 +1,7 @@
 #ifndef R_PIPELINE_H
 #define R_PIPELINE_H
 
-#include "r_render.h"
+#include "v_def.h"
 
 extern VkPipeline pipelines[MAX_PIPELINES];
 

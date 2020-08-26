@@ -3,6 +3,7 @@
 
 #include "w_world.h"
 #include "i_input.h"
+#include "r_render.h"
 
 typedef struct player {
     W_Object* object;

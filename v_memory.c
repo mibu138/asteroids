@@ -1,4 +1,5 @@
-#include "z_memory.h"
+#include "v_memory.h"
+#include "v_video.h"
 #include "def.h"
 #include <stdio.h>
 #include <vulkan/vulkan_core.h>
@@ -13,7 +14,7 @@ static VkBuffer hostMappedBuffer;
 static VkPhysicalDeviceMemoryProperties memoryProperties;
 static int hostVisibleCoherentIndex;
 uint8_t* hostBuffer;
-static Z_block blocks[MAX_BLOCKS];
+static V_block blocks[MAX_BLOCKS];
 
 static int blockCount = 0;
 static int bytesAvailable = BUFFER_SIZE;
@@ -24,7 +25,7 @@ static void printBufferMemoryReqs(const VkMemoryRequirements* reqs)
     printf("Size: %ld\tAlignment: %ld\n", reqs->size, reqs->alignment);
 }
 
-void z_Init(void)
+void v_InitMemory(void)
 {
     VkResult r;
 
@@ -97,12 +98,12 @@ void z_Init(void)
     assert( VK_SUCCESS == r );
 }
 
-Z_block* z_RequestBlock(const size_t size)
+V_block* v_RequestBlock(const size_t size)
 {
     assert( size % 4 == 0 ); // only allow for word-sized blocks
     assert( size < bytesAvailable);
     assert( blockCount < MAX_BLOCKS );
-    Z_block* pBlock = &blocks[blockCount];
+    V_block* pBlock = &blocks[blockCount];
     pBlock->address = hostBuffer + curBufferOffset;
     pBlock->vBuffer = &hostMappedBuffer;
     pBlock->size = size;
@@ -125,7 +126,7 @@ Z_block* z_RequestBlock(const size_t size)
     return pBlock;
 }
 
-void z_CleanUp()
+void v_CleanUpMemory()
 {
     vkUnmapMemory(device, hostVisibleCoherentMemory);
     vkDestroyBuffer(device, hostMappedBuffer, NULL);
