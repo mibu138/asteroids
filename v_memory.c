@@ -5,19 +5,28 @@
 #include <vulkan/vulkan_core.h>
 #include <assert.h>
 
-#define MEMORY_SIZE 524288 // minimum size for an allocation on my device (a validation message told me)
-#define BUFFER_SIZE 262144
+// HVC = Host Visible and Coherent
+#define MEMORY_SIZE_HVC 524288   // 512 KiB
+#define BUFFER_SIZE_HVC 262144   // 256 KiB
+// DL = Device Local    
+#define MEMORY_SIZE_DL  33554432 // 32 MiB
+#define BUFFER_SIZE_DL  16777216 // 16 MiB
+#define IMAGE_SIZE_DL   16777216 // 16 MiB
 #define MAX_BLOCKS 256
 
-static VkDeviceMemory hostVisibleCoherentMemory;
-static VkBuffer hostMappedBuffer;
+static VkDeviceMemory memoryHostVisibleCoherent;
+static VkDeviceMemory memoryDeviceLocal;
+static VkBuffer       bufferHostMapped;
+static VkImage        imageDeviceLocal;
+uint8_t*              hostBuffer;
+
 static VkPhysicalDeviceMemoryProperties memoryProperties;
-static int hostVisibleCoherentIndex;
-uint8_t* hostBuffer;
+static int hostVisibleCoherentTypeIndex;
+static int deviceLocalTypeIndex;
 static V_block blocks[MAX_BLOCKS];
 
 static int blockCount = 0;
-static int bytesAvailable = BUFFER_SIZE;
+static int bytesAvailable = BUFFER_SIZE_HVC;
 static int curBufferOffset = 0;
 
 static void printBufferMemoryReqs(const VkMemoryRequirements* reqs)
@@ -47,16 +56,19 @@ void v_InitMemory(void)
     for (int i = 0; i < memoryProperties.memoryTypeCount; i++) 
     {
         VkMemoryPropertyFlags flags = memoryProperties.memoryTypes[i].propertyFlags;
-        V1_PRINT("Type %d: Heap Index: %d Flags: | %s%s%s\n", 
+        V1_PRINT("Type %d: Heap Index: %d Flags: | %s%s%s%s%s%s\n", 
                 i, 
                 memoryProperties.memoryTypes[i].heapIndex,
                 flags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ?  "Device Local | " : "",
                 flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ?  "Host Visible | " : "",
-                flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ? "Host Coherent | " : ""
+                flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ? "Host Coherent | " : "",
+                flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT ?   "Host Cached | " : "",
+                flags & VK_MEMORY_PROPERTY_PROTECTED_BIT ?     "Protected | "   : "",
+                flags & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT ? "Lazily allocated | " : ""
                 );   
         if (flags & (VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
         {
-            hostVisibleCoherentIndex = i;
+            hostVisibleCoherentTypeIndex = i;
             found = true;
         }
     }
@@ -65,11 +77,11 @@ void v_InitMemory(void)
 
     const VkMemoryAllocateInfo allocInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .allocationSize = MEMORY_SIZE,
-        .memoryTypeIndex = hostVisibleCoherentIndex
+        .allocationSize = MEMORY_SIZE_HVC,
+        .memoryTypeIndex = hostVisibleCoherentTypeIndex
     };
 
-    r = vkAllocateMemory(device, &allocInfo, NULL, &hostVisibleCoherentMemory);
+    r = vkAllocateMemory(device, &allocInfo, NULL, &memoryHostVisibleCoherent);
     assert( VK_SUCCESS == r );
 
     VkBufferCreateInfo ci = {
@@ -78,23 +90,23 @@ void v_InitMemory(void)
                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
                  VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE, // queue determined by first use
-        .size = BUFFER_SIZE
+        .size = BUFFER_SIZE_HVC
     };
 
 
-    r = vkCreateBuffer(device, &ci, NULL, &hostMappedBuffer);
+    r = vkCreateBuffer(device, &ci, NULL, &bufferHostMapped);
     assert( VK_SUCCESS == r );
 
     VkMemoryRequirements reqs;
-    vkGetBufferMemoryRequirements(device, hostMappedBuffer, &reqs);
+    vkGetBufferMemoryRequirements(device, bufferHostMapped, &reqs);
     // we dont need to check the reqs. spec states that 
     // any buffer created without SPARSITY flags will 
     // support being bound to host visible | host coherent
 
-    r = vkBindBufferMemory(device, hostMappedBuffer, hostVisibleCoherentMemory, 0);
+    r = vkBindBufferMemory(device, bufferHostMapped, memoryHostVisibleCoherent, 0);
     assert( VK_SUCCESS == r );
 
-    r = vkMapMemory(device, hostVisibleCoherentMemory, 0, BUFFER_SIZE, 0, (void**)&hostBuffer);
+    r = vkMapMemory(device, memoryHostVisibleCoherent, 0, BUFFER_SIZE_HVC, 0, (void**)&hostBuffer);
     assert( VK_SUCCESS == r );
 }
 
@@ -105,7 +117,7 @@ V_block* v_RequestBlock(const size_t size)
     assert( blockCount < MAX_BLOCKS );
     V_block* pBlock = &blocks[blockCount];
     pBlock->address = hostBuffer + curBufferOffset;
-    pBlock->vBuffer = &hostMappedBuffer;
+    pBlock->vBuffer = &bufferHostMapped;
     pBlock->size = size;
     pBlock->vOffset = curBufferOffset;
     pBlock->isMapped = true;
@@ -128,7 +140,7 @@ V_block* v_RequestBlock(const size_t size)
 
 void v_CleanUpMemory()
 {
-    vkUnmapMemory(device, hostVisibleCoherentMemory);
-    vkDestroyBuffer(device, hostMappedBuffer, NULL);
-    vkFreeMemory(device, hostVisibleCoherentMemory, NULL);
+    vkUnmapMemory(device, memoryHostVisibleCoherent);
+    vkDestroyBuffer(device, bufferHostMapped, NULL);
+    vkFreeMemory(device, memoryHostVisibleCoherent, NULL);
 };

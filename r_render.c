@@ -1,7 +1,9 @@
 #include "def.h"
 #include "r_render.h"
 #include "v_video.h"
+#include "v_memory.h"
 #include "r_pipeline.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
@@ -158,6 +160,12 @@ static void initOffscreenFrameBuffer(void)
 
     VkMemoryRequirements memReqs;
     vkGetImageMemoryRequirements(device, offscreenFrameBuffer.image.handle, &memReqs);
+
+#ifndef NDEBUG
+    V1_PRINT("Offscreen framebuffer reqs: \nSize: %ld\nAlignment: %ld\nTypes: ", 
+            memReqs.size, memReqs.alignment);
+    bitprint(&memReqs.memoryTypeBits, 32);
+#endif
 
     VkImageViewCreateInfo viewInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,

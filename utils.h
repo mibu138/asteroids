@@ -14,5 +14,6 @@
 
 void printWorld();
 void printVec2(const Vec2*);
+void bitprint(const void *const thing, const size_t bitcount);
 
 #endif /* end of include guard: UTILS_H */
