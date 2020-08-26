@@ -199,7 +199,7 @@ static void initFrameBuffers(void)
         assert( VK_SUCCESS == r );
     }
 
-    //initOffscreenFrameBuffer();
+    initOffscreenFrameBuffer();
 }
 
 void r_Init(void)
