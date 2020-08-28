@@ -4,6 +4,7 @@ LIBS = -lvulkan -lxcb -lxcb-keysyms -lm
 O = build
 GLSL = shaders
 SPV  = shaders/spv
+TOOL = tools
 
 NAME = as
 
@@ -45,6 +46,7 @@ SHADERS =                         \
 		$(SPV)/postproc-vert.spv  \
 		$(SPV)/postproc-frag.spv
 
+
 debug: CFLAGS += -g -DVERBOSE=1
 debug: all
 
@@ -55,12 +57,15 @@ all: $(O)/$(NAME) tags
 
 shaders: $(SHADERS)
 
+tool: 
+	gcc tools/kernel-gen.c -o build/kernel-gen -lm
+
 clean: 
 	rm -f $(O)/*
 
 tags:
 	ctags -R .
-	
+
 $(O)/$(NAME): main.c $(OBJS) $(DEPS)
 	$(CC) $(CFLAGS) $(OBJS) $< -o $@ $(LIBS)
 
