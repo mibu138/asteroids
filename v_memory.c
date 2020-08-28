@@ -10,19 +10,14 @@
 #define BUFFER_SIZE_HVC 262144   // 256 KiB
 // DL = Device Local    
 #define MEMORY_SIZE_DL  33554432 // 32 MiB
-#define BUFFER_SIZE_DL  16777216 // 16 MiB
-#define IMAGE_SIZE_DL   16777216 // 16 MiB
 #define MAX_BLOCKS 256
 
 static VkDeviceMemory memoryHostVisibleCoherent;
 static VkDeviceMemory memoryDeviceLocal;
 static VkBuffer       bufferHostMapped;
-static VkImage        imageDeviceLocal;
 uint8_t*              hostBuffer;
 
 static VkPhysicalDeviceMemoryProperties memoryProperties;
-static int hostVisibleCoherentTypeIndex;
-static int deviceLocalTypeIndex;
 static V_block blocks[MAX_BLOCKS];
 
 static int blockCount = 0;
@@ -38,6 +33,9 @@ void v_InitMemory(void)
 {
     VkResult r;
 
+    int hostVisibleCoherentTypeIndex;
+    int deviceLocalTypeIndex;
+
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
 
     V1_PRINT("Memory Heap Info:\n");
@@ -51,7 +49,8 @@ void v_InitMemory(void)
                 // note there are other possible flags, but seem to only deal with multiple gpus
     }
 
-    bool found = false;
+    bool foundHvc = false;
+    bool foundDl  = false;
     V1_PRINT("Memory Type Info:\n");
     for (int i = 0; i < memoryProperties.memoryTypeCount; i++) 
     {
@@ -66,14 +65,21 @@ void v_InitMemory(void)
                 flags & VK_MEMORY_PROPERTY_PROTECTED_BIT ?     "Protected | "   : "",
                 flags & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT ? "Lazily allocated | " : ""
                 );   
-        if (flags & (VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
+        if ((flags & (VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)) &&
+                !foundHvc)
         {
             hostVisibleCoherentTypeIndex = i;
-            found = true;
+            foundHvc = true;
+        }
+        if ((flags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) && !foundDl)
+        {
+            deviceLocalTypeIndex = i;
+            foundDl = true;
         }
     }
 
-    assert( found );
+    assert( foundHvc );
+    assert( foundDl );
 
     const VkMemoryAllocateInfo allocInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -108,6 +114,19 @@ void v_InitMemory(void)
 
     r = vkMapMemory(device, memoryHostVisibleCoherent, 0, BUFFER_SIZE_HVC, 0, (void**)&hostBuffer);
     assert( VK_SUCCESS == r );
+
+    // --------------------------------------------------------
+    // allocate device local memory
+    // --------------------------------------------------------
+
+    const VkMemoryAllocateInfo allocInfoDl = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = MEMORY_SIZE_DL,
+        .memoryTypeIndex = deviceLocalTypeIndex
+    };
+
+    r = vkAllocateMemory(device, &allocInfoDl, NULL, &memoryDeviceLocal);
+    assert( VK_SUCCESS == r );
 }
 
 V_block* v_RequestBlock(const size_t size)
@@ -138,9 +157,18 @@ V_block* v_RequestBlock(const size_t size)
     return pBlock;
 }
 
+void v_BindImageToMemory(const VkImage image)
+{
+    static bool imageBound = false;
+    assert (!imageBound);
+    vkBindImageMemory(device, image, memoryDeviceLocal, 0);
+    imageBound = true;
+}
+
 void v_CleanUpMemory()
 {
     vkUnmapMemory(device, memoryHostVisibleCoherent);
     vkDestroyBuffer(device, bufferHostMapped, NULL);
     vkFreeMemory(device, memoryHostVisibleCoherent, NULL);
+    vkFreeMemory(device, memoryDeviceLocal, NULL);
 };

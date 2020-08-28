@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
+#include <vulkan/vulkan_core.h>
 
 
 VkRenderPass swapchainRenderPass;
@@ -167,6 +168,8 @@ static void initOffscreenFrameBuffer(void)
     bitprint(&memReqs.memoryTypeBits, 32);
 #endif
 
+    v_BindImageToMemory(offscreenFrameBuffer.image.handle);
+
     VkImageViewCreateInfo viewInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = offscreenFrameBuffer.image.handle,
@@ -281,6 +284,8 @@ void r_PresentFrame(void)
 void r_CleanUp(void)
 {
     cleanUpPipelines();
+    vkDestroyImageView(device, offscreenFrameBuffer.image.view, NULL);
+    vkDestroyImage(device, offscreenFrameBuffer.image.handle, NULL);
     vkDestroyRenderPass(device, swapchainRenderPass, NULL);
     vkDestroyRenderPass(device, offscreenRenderPass, NULL);
     for (int i = 0; i < FRAME_COUNT; i++) 

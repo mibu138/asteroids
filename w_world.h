@@ -4,7 +4,7 @@
 #include "m_math.h"
 #include "v_memory.h"
 
-#define W_MAX_OBJ  128
+#define W_MAX_OBJ 1024 
 #define W_MAX_EMIT 32
 #define MAX_VERTS_PER_OBJ   16
 #define MAX_INDICES_PER_OBJ 16

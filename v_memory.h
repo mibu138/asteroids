@@ -18,6 +18,8 @@ void v_InitMemory(void);
 
 V_block* v_RequestBlock(size_t size);
 
+void v_BindImageToMemory(const VkImage);
+
 void v_CleanUpMemory(void);
 
 #endif /* end of include guard: V_MEMORY_H */

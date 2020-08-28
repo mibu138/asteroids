@@ -101,7 +101,7 @@ static void updateEmitable(const int index)
 
 static void initObjects(void)
 {
-    w_ObjectCount = 5;
+    w_ObjectCount = 3;
     w_ObjectVertexBlock = v_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
     w_ObjectVertexBuffer = (Vertex*)w_ObjectVertexBlock->address;
     //w_ObjectIndexBlock  = z_RequestBlock(
