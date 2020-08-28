@@ -203,9 +203,9 @@ static void initOffscreenFrameBuffer(void)
         .anisotropyEnable = VK_FALSE,
         .compareEnable = VK_FALSE,
         .minLod = 0.0,
-        .maxLod = 1.0,
+        .maxLod = 0.0, // must both be 0 when using unnormalizedCoordinates
         .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
-        .unnormalizedCoordinates = VK_FALSE,
+        .unnormalizedCoordinates = VK_TRUE // allow us to window coordinates in frag shader
     };
 
     r = vkCreateSampler(device, &samplerInfo, NULL, &offscreenFrameBuffer.image.sampler);

@@ -27,7 +27,7 @@ void r_UpdateRenderCommands(void)
     VkCommandBufferBeginInfo cbbi = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     r = vkBeginCommandBuffer(frame->commandBuffer, &cbbi);
 
-    VkClearValue clearValue = {0.005f, 0.0f, 0.01f, 1.0f};
+    VkClearValue clearValue = {0.001f, 0.0f, 0.002f, 1.0f};
 
     const VkRenderPassBeginInfo rpassInfoFirst = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,

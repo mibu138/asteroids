@@ -2,4 +2,5 @@ tags
 build
 build/*
 shaders/spv/*
+tools/kernel-gen
 as
