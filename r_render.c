@@ -11,13 +11,15 @@
 #include <vulkan/vulkan_core.h>
 
 
-VkRenderPass swapchainRenderPass;
-VkRenderPass offscreenRenderPass;
+VkRenderPass   swapchainRenderPass;
+VkRenderPass   offscreenRenderPass;
 
-FrameBuffer  offscreenFrameBuffer;
+FrameBuffer    offscreenFrameBuffer;
 
-Frame        frames[FRAME_COUNT];
-uint32_t     curFrameIndex = 0;
+const VkFormat colorFormat = VK_FORMAT_R8G8B8A8_SRGB;
+
+Frame          frames[FRAME_COUNT];
+uint32_t       curFrameIndex = 0;
 
 static void initFrames(void)
 {
@@ -131,6 +133,7 @@ static void initRenderPasses(void)
     assert( VK_SUCCESS == r );
 
     attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    attachment.format      = colorFormat;
 
     r = vkCreateRenderPass(device, &ci, NULL, &offscreenRenderPass);
     assert( VK_SUCCESS == r );
@@ -141,7 +144,7 @@ static void initOffscreenFrameBuffer(void)
     VkImageCreateInfo imageInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType = VK_IMAGE_TYPE_2D,
-        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .format = colorFormat,
         .extent = {WINDOW_WIDTH, WINDOW_HEIGHT, 1},
         .mipLevels = 1,
         .arrayLayers = 1,
@@ -175,7 +178,7 @@ static void initOffscreenFrameBuffer(void)
         .image = offscreenFrameBuffer.image.handle,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .components = {0, 0, 0, 0}, // no swizzling
-        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .format = colorFormat,
         .subresourceRange = {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             .baseMipLevel = 0,
@@ -186,6 +189,41 @@ static void initOffscreenFrameBuffer(void)
     };
 
     r = vkCreateImageView(device, &viewInfo, NULL, &offscreenFrameBuffer.image.view);
+    assert( VK_SUCCESS == r );
+
+    VkSamplerCreateInfo samplerInfo = {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = VK_FILTER_NEAREST,
+        .minFilter = VK_FILTER_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .mipLodBias = 0.0,
+        .anisotropyEnable = VK_FALSE,
+        .compareEnable = VK_FALSE,
+        .minLod = 0.0,
+        .maxLod = 1.0,
+        .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK,
+        .unnormalizedCoordinates = VK_FALSE,
+    };
+
+    r = vkCreateSampler(device, &samplerInfo, NULL, &offscreenFrameBuffer.image.sampler);
+    assert( VK_SUCCESS == r );
+
+    offscreenFrameBuffer.pRenderPass = &offscreenRenderPass;
+
+    VkFramebufferCreateInfo framebufferInfo = {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .layers = 1,
+        .height = WINDOW_HEIGHT,
+        .width  = WINDOW_WIDTH,
+        .renderPass = *offscreenFrameBuffer.pRenderPass,
+        .attachmentCount = 1,
+        .pAttachments = &offscreenFrameBuffer.image.view,
+    };
+
+    r = vkCreateFramebuffer(device, &framebufferInfo, NULL, &offscreenFrameBuffer.handle);
     assert( VK_SUCCESS == r );
 }
 
@@ -219,6 +257,7 @@ void r_Init(void)
     initFrames();
     initFrameBuffers();
     initDescriptorSets();
+    initDescriptors();
     initPipelines();
 }
 
@@ -284,6 +323,8 @@ void r_PresentFrame(void)
 void r_CleanUp(void)
 {
     cleanUpPipelines();
+    vkDestroySampler(device, offscreenFrameBuffer.image.sampler, NULL);
+    vkDestroyFramebuffer(device, offscreenFrameBuffer.handle, NULL);
     vkDestroyImageView(device, offscreenFrameBuffer.image.view, NULL);
     vkDestroyImage(device, offscreenFrameBuffer.image.handle, NULL);
     vkDestroyRenderPass(device, swapchainRenderPass, NULL);

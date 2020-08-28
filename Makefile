@@ -42,7 +42,8 @@ OBJS = 					    \
 SHADERS =                         \
 		$(SPV)/simple-vert.spv    \
 		$(SPV)/simple-frag.spv    \
-		$(SPV)/postproc-vert.spv 
+		$(SPV)/postproc-vert.spv  \
+		$(SPV)/postproc-frag.spv
 
 debug: CFLAGS += -g -DVERBOSE=1
 debug: all
@@ -67,4 +68,7 @@ $(O)/%.o:  %.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(SPV)/%-vert.spv: $(GLSL)/%.vert
+	glslc $< -o $@
+
+$(SPV)/%-frag.spv: $(GLSL)/%.frag
 	glslc $< -o $@

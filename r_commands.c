@@ -29,16 +29,16 @@ void r_UpdateRenderCommands(void)
 
     VkClearValue clearValue = {0.005f, 0.0f, 0.01f, 1.0f};
 
-    VkRenderPassBeginInfo rpassInfo = {
+    const VkRenderPassBeginInfo rpassInfoFirst = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .clearValueCount = 1,
         .pClearValues = &clearValue,
         .renderArea = {{0, 0}, {WINDOW_WIDTH, WINDOW_HEIGHT}},
-        .renderPass = *frame->pRenderPass,
-        .framebuffer = frame->frameBuffer,
+        .renderPass = *offscreenFrameBuffer.pRenderPass,
+        .framebuffer = offscreenFrameBuffer.handle
     };
 
-    vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfoFirst, VK_SUBPASS_CONTENTS_INLINE);
 
     vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[R_OBJ_PIPELINE]);
 
@@ -62,9 +62,21 @@ void r_UpdateRenderCommands(void)
     if (w_EmitableCount)
         vkCmdDraw(frame->commandBuffer, w_EmitableCount, 1, 0, 0);
 
-//    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[R_POST_PROC_PIPELINE]);
-//
-//    vkCmdDraw(frame->commandBuffer, 3, 1, 0, 0);
+    vkCmdEndRenderPass(frame->commandBuffer);
+
+    VkRenderPassBeginInfo rpassInfoSecond = rpassInfoFirst;
+    rpassInfoSecond.framebuffer =  frame->frameBuffer;
+    rpassInfoSecond.renderPass  = *frame->pRenderPass;
+
+    vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfoSecond, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[R_POST_PROC_PIPELINE]);
+
+    vkCmdBindDescriptorSets(frame->commandBuffer, 
+            VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayoutPostProcess, 
+            0, 1, descriptorSets, 0, NULL);
+
+    vkCmdDraw(frame->commandBuffer, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(frame->commandBuffer);
 

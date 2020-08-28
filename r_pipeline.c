@@ -10,7 +10,7 @@
 VkPipeline      pipelines[MAX_PIPELINES];
 VkDescriptorSet descriptorSets[MAX_DESCRIPTOR_SETS];
 static VkPipelineLayout pipelineLayoutGeometry;
-static VkPipelineLayout pipelineLayoutPostProcess;
+VkPipelineLayout pipelineLayoutPostProcess;
 static VkDescriptorSetLayout descriptorSetLayoutEmpty; 
 static VkDescriptorSetLayout descriptorSetLayoutPostProcess; 
 static VkDescriptorPool      descriptorPool;
@@ -96,6 +96,27 @@ void initDescriptorSets(void)
     };
 
     vkAllocateDescriptorSets(device, &allocInfo, descriptorSets);
+}
+
+void initDescriptors(void)
+{
+    VkDescriptorImageInfo imageInfo = {
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        .imageView = offscreenFrameBuffer.image.view,
+        .sampler = offscreenFrameBuffer.image.sampler
+    };
+
+    VkWriteDescriptorSet writeImages = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstArrayElement = 0,
+        .dstSet = descriptorSets[R_POST_PROC_DESCRIPTOR_SET],
+        .dstBinding = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = &imageInfo
+    };
+
+    vkUpdateDescriptorSets(device, 1, &writeImages, 0, NULL);
 }
 
 static void initPipelineLayouts(void)
@@ -242,7 +263,7 @@ void initPipelines(void)
         .basePipelineIndex = 0, // not used
         .basePipelineHandle = 0,
         .subpass = 0, // which subpass in the renderpass do we use this pipeline with
-        .renderPass = swapchainRenderPass,
+        .renderPass = offscreenRenderPass,
         .layout = pipelineLayoutGeometry,
         .pDynamicState = NULL,
         .pColorBlendState = &colorBlendState,
@@ -290,11 +311,14 @@ void initPipelines(void)
     };
 
     VkShaderModule postProcVertModule;
+    VkShaderModule postProcFragModule;
 
     initShaderModule("shaders/spv/postproc-vert.spv", &postProcVertModule);
+    initShaderModule("shaders/spv/postproc-frag.spv", &postProcFragModule);
 
     VkPipelineShaderStageCreateInfo postProcShaderStages[2] = {shaderStages[0], shaderStages[1]};
     postProcShaderStages[0].module = postProcVertModule;
+    postProcShaderStages[1].module = postProcFragModule;
     
     // ----------------------------------------------------------
     // ----------------------------------------------------------
@@ -305,6 +329,7 @@ void initPipelines(void)
     postProcPipelineInfo.pVertexInputState = &postProcInputState;
     postProcPipelineInfo.pStages           = postProcShaderStages;
     postProcPipelineInfo.layout            = pipelineLayoutPostProcess;
+    postProcPipelineInfo.renderPass        = swapchainRenderPass;
 
     VkGraphicsPipelineCreateInfo infos[PIPELINE_COUNT] = {pipelineInfo, emitablePipelineInfo, postProcPipelineInfo};
 
@@ -313,14 +338,15 @@ void initPipelines(void)
     vkDestroyShaderModule(device, vertModule, NULL);
     vkDestroyShaderModule(device, fragModule, NULL);
     vkDestroyShaderModule(device, postProcVertModule, NULL);
+    vkDestroyShaderModule(device, postProcFragModule, NULL);
     vkDestroyDescriptorSetLayout(device, descriptorSetLayoutEmpty, NULL);
     vkDestroyDescriptorSetLayout(device, descriptorSetLayoutPostProcess, NULL);
-    vkDestroyPipelineLayout(device, pipelineLayoutGeometry, NULL);
-    vkDestroyPipelineLayout(device, pipelineLayoutPostProcess, NULL);
 }
 
 void cleanUpPipelines()
 {
+    vkDestroyPipelineLayout(device, pipelineLayoutGeometry, NULL);
+    vkDestroyPipelineLayout(device, pipelineLayoutPostProcess, NULL);
     for (int i = 0; i < PIPELINE_COUNT; i++) 
     {
         vkDestroyPipeline(device, pipelines[i], NULL);
