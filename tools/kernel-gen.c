@@ -3,7 +3,7 @@
 #include <math.h>
 #include <assert.h>
 
-#define KERN_SIZE 25
+#define KERN_SIZE 49
 #define KERN_WIDTH KERN_SIZE / 2
 
 #define STR_SIZE 100000

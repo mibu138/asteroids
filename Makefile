@@ -44,7 +44,8 @@ SHADERS =                         \
 		$(SPV)/simple-vert.spv    \
 		$(SPV)/simple-frag.spv    \
 		$(SPV)/postproc-vert.spv  \
-		$(SPV)/postproc-frag.spv
+		$(SPV)/postproc-frag.spv  \
+		$(SPV)/glow-only-frag.spv
 
 
 debug: CFLAGS += -g -DVERBOSE=1

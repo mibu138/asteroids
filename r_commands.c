@@ -19,6 +19,32 @@ void r_InitRenderCommands(void)
     }
 }
 
+static void recordPostProcessRenderPass(Frame* frame)
+{
+    VkClearValue clearValue = {0.002f, 0.003f, 0.009f, 1.0f};
+
+    const VkRenderPassBeginInfo rpassInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .clearValueCount = 1,
+        .pClearValues = &clearValue,
+        .renderArea = {{0, 0}, {WINDOW_WIDTH, WINDOW_HEIGHT}},
+        .renderPass = *frame->pRenderPass,
+        .framebuffer = frame->frameBuffer
+    };
+
+    vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[R_POST_PROC_PIPELINE]);
+
+    vkCmdBindDescriptorSets(frame->commandBuffer, 
+            VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayoutPostProcess, 
+            0, 1, descriptorSets, 0, NULL);
+
+    vkCmdDraw(frame->commandBuffer, 3, 1, 0, 0);
+
+    vkCmdEndRenderPass(frame->commandBuffer);
+}
+
 void r_UpdateRenderCommands(void)
 {
     VkResult r;
@@ -27,7 +53,7 @@ void r_UpdateRenderCommands(void)
     VkCommandBufferBeginInfo cbbi = {.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     r = vkBeginCommandBuffer(frame->commandBuffer, &cbbi);
 
-    VkClearValue clearValue = {0.001f, 0.0f, 0.002f, 1.0f};
+    VkClearValue clearValue = {0.002f, 0.003f, 0.009f, 1.0f};
 
     const VkRenderPassBeginInfo rpassInfoFirst = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -64,21 +90,7 @@ void r_UpdateRenderCommands(void)
 
     vkCmdEndRenderPass(frame->commandBuffer);
 
-    VkRenderPassBeginInfo rpassInfoSecond = rpassInfoFirst;
-    rpassInfoSecond.framebuffer =  frame->frameBuffer;
-    rpassInfoSecond.renderPass  = *frame->pRenderPass;
-
-    vkCmdBeginRenderPass(frame->commandBuffer, &rpassInfoSecond, VK_SUBPASS_CONTENTS_INLINE);
-
-    vkCmdBindPipeline(frame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[R_POST_PROC_PIPELINE]);
-
-    vkCmdBindDescriptorSets(frame->commandBuffer, 
-            VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayoutPostProcess, 
-            0, 1, descriptorSets, 0, NULL);
-
-    vkCmdDraw(frame->commandBuffer, 3, 1, 0, 0);
-
-    vkCmdEndRenderPass(frame->commandBuffer);
+    recordPostProcessRenderPass(frame);
 
     r = vkEndCommandBuffer(frame->commandBuffer);
     assert ( VK_SUCCESS == r );

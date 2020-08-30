@@ -36,18 +36,48 @@ float glow[KERN_LEN] = {
     0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.010454636, 0.026757965, 0.036672439, 0.039999999, 0.036672439, 0.026757965, 0.010454636, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 0.000000000, 
 };
 
+vec2 quantized(vec2 uv)
+{
+    uv /= 10.0;
+    ivec2 floorVec = ivec2(round(uv));
+    uv -= floorVec;
+    return uv;
+}
+
 void main()
 {
     vec2 uv =  gl_FragCoord.xy; // this works because our sampler is set to use unnormalizedCoordinates
-    vec4 baseColor = vec4(0, 0, 0, 0);
+    vec4 baseColor = vec4(0, 0, 0, 1);
+//    bool gap = quantized(uv) > 0.5;
+//    if (gap) 
+//    {
+//        outColor = baseColor;
+//        return;
+//    }
     for (int i = -1 * KERN_WIDTH; i <= KERN_WIDTH; i++)
     {
         for (int j = -1 * KERN_WIDTH; j <= KERN_WIDTH; j++)
         {
+            const vec2 delta = vec2(i, j);
+            vec2 br = quantized(uv + delta);
+            if (abs(br.x) > 0.6 || abs(br.y) > 0.3) continue;
             float scale = glow[(i+KERN_WIDTH) * KERN_SIZE + (j + KERN_WIDTH)];
-            const vec2  delta = vec2(i, j);
-            if (scale < 0.95) scale *= scale * scale * 0.01;
-            baseColor += scale * texture(inTex, uv + delta);
+            if (i != 0 || j != 0)
+            {
+                scale *= 0.005;
+            }
+            else 
+            {
+                scale *= 0.9;
+            }
+            vec4 c = scale * texture(inTex, uv + delta);
+            baseColor += c;
+            if (abs(br.x) > 0.4)
+                baseColor.r += c.r * 1;
+            else if (abs(br.x) > 0.2)
+                baseColor.b += c.b * 1;
+            else 
+                baseColor.g += c.g;
         }
     }
     outColor = baseColor;

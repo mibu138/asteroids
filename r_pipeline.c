@@ -225,7 +225,7 @@ void initPipelines(void)
         .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .depthBiasEnable = VK_FALSE,
-        .lineWidth = 2.0
+        .lineWidth = 4.0
     };
 
     const VkPipelineMultisampleStateCreateInfo multisampleState = {
@@ -314,7 +314,7 @@ void initPipelines(void)
     VkShaderModule postProcFragModule;
 
     initShaderModule("shaders/spv/postproc-vert.spv", &postProcVertModule);
-    initShaderModule("shaders/spv/postproc-frag.spv", &postProcFragModule);
+    initShaderModule("shaders/spv/glow-only-frag.spv", &postProcFragModule);
 
     VkPipelineShaderStageCreateInfo postProcShaderStages[2] = {shaderStages[0], shaderStages[1]};
     postProcShaderStages[0].module = postProcVertModule;

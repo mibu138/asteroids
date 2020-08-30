@@ -101,7 +101,7 @@ static void updateEmitable(const int index)
 
 static void initObjects(void)
 {
-    w_ObjectCount = 3;
+    w_ObjectCount = 6;
     w_ObjectVertexBlock = v_RequestBlock(MAX_VERTS_PER_OBJ * W_MAX_OBJ * sizeof(Vertex));
     w_ObjectVertexBuffer = (Vertex*)w_ObjectVertexBlock->address;
     //w_ObjectIndexBlock  = z_RequestBlock(
@@ -130,7 +130,7 @@ static void initObjects(void)
         }
         else
         {
-            w_GenerateAsteroidRand1(i, 0.06);
+            w_GenerateAsteroidRand1(i, 0.1);
             w_Objects[i].vel.x = m_RandNeg() * INIT_SPEED;
             w_Objects[i].vel.y = m_RandNeg() * INIT_SPEED;
         }
