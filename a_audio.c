@@ -5,7 +5,7 @@
 #include <assert.h>
 
 PaStream* a_Stream;
-Sound     soundA;
+Sound     soundA = {.duration = 2000};
 
 Wave      sineWave;
 Wave      squareWave;
@@ -22,10 +22,13 @@ static int waveFunction(
     float* out =   (float*)outputBuffer;
     for (int i = 0; i < framesPerBuffer; i++) 
     {
-        bool playing = data->ticks > 0;
+        const uint32_t ticks = data->ticks;
+        bool playing = ticks > 0;
         if (playing)
         {
-            data->amplitude = 1.0;
+            float diff = (data->duration - ticks);
+            if (diff  < 100)  data->amplitude = diff  / 100.0;
+            if (ticks < 100)  data->amplitude = ticks / 100.0;
             data->ticks--;
         }
         else 
@@ -53,7 +56,7 @@ void a_Init(void)
 {
     PaError r;
     initSineWave();
-    soundA.frequency = 320.0;
+    soundA.frequency = 420.0;
     soundA.wave = sineWave;
 
     r = Pa_Initialize();
@@ -74,7 +77,7 @@ void a_Init(void)
 
 void a_PlayBeep(void)
 {
-    soundA.ticks = 4000;
+    soundA.ticks = soundA.duration;
 }
 
 void a_CleanUp(void)

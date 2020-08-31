@@ -13,6 +13,7 @@ typedef struct
 
 typedef struct
 {
+    const uint32_t    duration;
     uint32_t          ticks;
     float             amplitude;
     uint32_t          phase;
