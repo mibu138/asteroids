@@ -6,6 +6,7 @@
 #include "g_game.h"
 #include "v_memory.h"
 #include "i_input.h"
+#include "a_audio.h"
 #include "utils.h"
 #include "def.h"
 #include <stdio.h>
@@ -22,6 +23,8 @@ jmp_buf exit_game;
 
 int main(int argc, char *argv[])
 {
+    a_Init();
+    printf("Audio initialized\n");
     d_Init();
     printf("Display initialized.\n");
     v_Init();
@@ -87,5 +90,6 @@ int main(int argc, char *argv[])
     d_CleanUp();
     r_CleanUp();
     v_CleanUp();
+    a_CleanUp();
     return 0;
 }

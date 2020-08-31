@@ -81,8 +81,8 @@ void main()
             vec4 c = scale * scale * scale * texture(inTex, uv + delta);
             if ( i != 0 || j != 0)
             {
-                c.r = c.g = c.b;
-                c *= 0.002;
+                //c.r = c.g = c.b;
+                c *= 0.02;
             }
             baseColor += c;
         }

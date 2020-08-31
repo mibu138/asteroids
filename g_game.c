@@ -1,6 +1,7 @@
 #include "m_math.h"
 #include "g_game.h"
 #include "r_pipeline.h"
+#include "a_audio.h"
 #include "def.h"
 #include <assert.h>
 #include <setjmp.h>
@@ -94,6 +95,7 @@ void g_Update(void)
         m_Rotate(player.object->angle, &dir);
         beam->vel = dir;
         fire = false;
+        a_PlayBeep();
     }
 }
 

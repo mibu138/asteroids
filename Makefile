@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall 
-LIBS = -lvulkan -lxcb -lxcb-keysyms -lm
+LIBS = -lvulkan -lxcb -lxcb-keysyms -lm -lportaudio
 O = build
 GLSL = shaders
 SPV  = shaders/spv
@@ -22,6 +22,7 @@ DEPS =                 \
 		w_collision.h  \
 		w_create.h     \
 		i_input.h      \
+		a_audio.h      \
 		utils.h        \
 		def.h
 
@@ -38,6 +39,7 @@ OBJS = 					    \
 		$(O)/w_collision.o  \
 		$(O)/w_create.o     \
 		$(O)/i_input.o      \
+		$(O)/a_audio.o      \
 		$(O)/utils.o
 
 SHADERS =                         \
