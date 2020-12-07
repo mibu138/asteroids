@@ -58,9 +58,6 @@ int main(int argc, char *argv[])
         i_GetEvents();
         i_ProcessEvents();
         g_Update();
-        // because we will directly modify gpu mapped
-        // memory in the world update, we must ensure
-        // the previous frame is done reading from it
         w_Update();
         r_RequestFrame();
         r_UpdateRenderCommands();
