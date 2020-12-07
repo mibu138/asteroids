@@ -195,8 +195,8 @@ static VkPhysicalDevice retrievePhysicalDevice(void)
         vkGetPhysicalDeviceProperties(devices[i], &props[i]);
         V1_PRINT("%s\n", props[i].deviceName);
     }
-    V1_PRINT("Selecting Device: %s\n", props[0].deviceName);
-    return devices[0];
+    V1_PRINT("Selecting Device: %s\n", props[1].deviceName);
+    return devices[1];
 }
 
 static void initDevice(void)

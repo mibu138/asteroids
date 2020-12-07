@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
     uint64_t frameCount   = 0;
     uint64_t nsTotal      = 0;
     unsigned long nsDelta = 0;
+    uint32_t shortestFrame = NS_PER_S;
+    uint32_t longestFrame = 0;
 
     while( 1 ) 
     {
@@ -69,17 +71,21 @@ int main(int argc, char *argv[])
         nsDelta  = (endTime.tv_sec * NS_PER_S + endTime.tv_nsec) - (startTime.tv_sec * NS_PER_S + startTime.tv_nsec);
         nsTotal += nsDelta;
 
+        if (nsDelta > longestFrame) longestFrame = nsDelta;
+        if (nsDelta < shortestFrame) shortestFrame = nsDelta;
+
         diffTime.tv_nsec = NS_TARGET - nsDelta;
 
-        assert ( NS_TARGET > nsDelta );
-
-        nanosleep(&diffTime, &remTime);
+        if( NS_TARGET > nsDelta )
+            nanosleep(&diffTime, &remTime);
 
         frameCount++;
     }
 
     printf("Total Frames: %ld\n", frameCount);
     printf("Total nanoseconds: %ld\n", nsTotal);
+    printf("Shortest frame: %d\n", shortestFrame);
+    printf("Longest frame: %d\n", longestFrame);
     printf("Average nanoseconds per frame: %ld\n", nsTotal / frameCount);
 
     vkDeviceWaitIdle(device);
