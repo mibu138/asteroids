@@ -19,6 +19,9 @@ uint32_t graphicsQueueFamilyIndex = UINT32_MAX; //hopefully this causes obvious 
 VkQueue  graphicsQueues[G_QUEUE_COUNT];
 VkQueue  presentQueue;
 
+
+// TODO check for this
+static const VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR; // i already know its supported 
 static VkSurfaceKHR     surface;
 VkSwapchainKHR   swapchain;
 
@@ -195,8 +198,8 @@ static VkPhysicalDevice retrievePhysicalDevice(void)
         vkGetPhysicalDeviceProperties(devices[i], &props[i]);
         V1_PRINT("%s\n", props[i].deviceName);
     }
-    V1_PRINT("Selecting Device: %s\n", props[1].deviceName);
-    return devices[1];
+    V1_PRINT("Selecting Device: %s\n", props[0].deviceName);
+    return devices[0];
 }
 
 static void initDevice(void)
@@ -303,6 +306,34 @@ static void initSurface(void)
     V1_PRINT("Surface created successfully.\n");
 }
 
+static VkSwapchainCreateInfoKHR swapchainInfo()
+{
+    VkSurfaceCapabilitiesKHR capabilities;
+    VkResult r = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities);
+    assert(r == VK_SUCCESS);
+
+    const VkSwapchainCreateInfoKHR ci = {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .surface = surface,
+        .minImageCount = 2,
+        .imageFormat = swapFormat, //50
+        .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+        .imageExtent = capabilities.currentExtent,
+        .imageArrayLayers = 1, // number of views in a multiview / stereo surface
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE, // queue sharing. see vkspec section 11.7. 
+        .queueFamilyIndexCount = 0, // dont need with exclusive sharing
+        .pQueueFamilyIndices = NULL, // ditto
+        .preTransform = capabilities.currentTransform,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, //dunno. may affect blending
+        .presentMode = presentMode,
+        .clipped = VK_FALSE, // allows pixels convered by another window to be clipped. but will mess up saving the swap image.
+        .oldSwapchain = VK_NULL_HANDLE,
+    };
+
+    return ci;
+}
+
 static void initSwapchain(void)
 {
     VkBool32 supported;
@@ -329,29 +360,10 @@ static void initSwapchain(void)
     VkPresentModeKHR presentModes[presentModeCount];
     vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes);
 
-    const VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR; // i already know its supported 
-
     assert(capabilities.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
     V1_PRINT("Surface Capabilities: Min swapchain image count: %d\n", capabilities.minImageCount);
 
-    const VkSwapchainCreateInfoKHR ci = {
-        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-        .surface = surface,
-        .minImageCount = 2,
-        .imageFormat = swapFormat, //50
-        .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
-        .imageExtent = capabilities.currentExtent,
-        .imageArrayLayers = 1, // number of views in a multiview / stereo surface
-        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE, // queue sharing. see vkspec section 11.7. 
-        .queueFamilyIndexCount = 0, // dont need with exclusive sharing
-        .pQueueFamilyIndices = NULL, // ditto
-        .preTransform = capabilities.currentTransform,
-        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, //dunno. may affect blending
-        .presentMode = presentMode,
-        .clipped = VK_FALSE, // allows pixels convered by another window to be clipped. but will mess up saving the swap image.
-        .oldSwapchain = VK_NULL_HANDLE
-    };
+    const VkSwapchainCreateInfoKHR ci = swapchainInfo();
 
     r = vkCreateSwapchainKHR(device, &ci, NULL, &swapchain);
     assert(VK_SUCCESS == r);
@@ -381,6 +393,30 @@ void v_Init(void)
     initSurface();
     initSwapchain();
     v_InitMemory();
+}
+
+void v_RecreateSwapChain()
+{
+    VkSwapchainCreateInfoKHR ci = swapchainInfo();
+    ci.oldSwapchain = swapchain;
+
+    VkResult r = vkCreateSwapchainKHR(device, &ci, NULL, &swapchain);
+    assert(r == VK_SUCCESS);
+
+    uint32_t imageCount;
+    r = vkGetSwapchainImagesKHR(device, swapchain, &imageCount, NULL);
+    assert(VK_SUCCESS == r);
+    assert(FRAME_COUNT == imageCount);
+    r = vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages);
+    assert(VK_SUCCESS == r);
+
+    for (int i = 0; i < FRAME_COUNT; i++) 
+    {
+        vkDestroySemaphore(device, imageAcquiredSemaphores[i], NULL);
+        VkSemaphoreCreateInfo semaCi = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+        r = vkCreateSemaphore(device, &semaCi, NULL, &imageAcquiredSemaphores[i]);
+        assert( r == VK_SUCCESS );
+    }
 }
 
 void v_CleanUp(void)

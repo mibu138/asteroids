@@ -57,6 +57,12 @@ void d_Init(void)
             XCB_ATOM_WM_NAME, 
             XCB_ATOM_STRING, 8, strlen(windowName), windowName);
 
+    xcb_change_property(d_XcbWindow.connection, 
+            XCB_PROP_MODE_REPLACE, 
+            d_XcbWindow.window, 
+            XCB_ATOM_WM_CLASS, 
+            XCB_ATOM_STRING, 8, strlen(windowName), windowName);
+
     xcb_map_window(d_XcbWindow.connection, d_XcbWindow.window);
     //xcb_flush(d_XcbWindow.connection);
 }

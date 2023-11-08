@@ -19,6 +19,7 @@ extern VkSemaphore    imageAcquiredSemaphores[FRAME_COUNT];
 extern uint64_t       frameCounter;
 
 void v_Init(void);
+void v_RecreateSwapChain();
 void v_AcquireSwapImage(uint32_t* pImageIndex);
 void v_CleanUp(void);
 

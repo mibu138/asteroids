@@ -61,27 +61,8 @@ static void initFrames(void)
         r = vkCreateFence(device, &fenceCi, NULL, &frames[i].fence);
         assert( VK_SUCCESS == r );
 
+        frames[i].pRenderPass = &swapchainRenderPass;
         frames[i].index = i;
-        frames[i].pImage = &swapchainImages[i];
-
-        VkImageSubresourceRange ssr = {
-            .baseArrayLayer = 0,
-            .layerCount = 1,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT
-        };
-
-        VkImageViewCreateInfo imageViewInfo = {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-            .subresourceRange = ssr,
-            .format = swapFormat,
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .image = *frames[i].pImage,
-        };
-
-        r = vkCreateImageView(device, &imageViewInfo, NULL, &frames[i].imageView);
-        assert( VK_SUCCESS == r );
     }
     V1_PRINT("Frames successfully initialized.\n");
 }
@@ -232,6 +213,27 @@ static void initFrameBuffers(void)
     VkResult r;
     for (int i = 0; i < FRAME_COUNT; i++) 
     {
+        frames[i].pImage = &swapchainImages[i];
+
+        VkImageSubresourceRange ssr = {
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT
+        };
+
+        VkImageViewCreateInfo imageViewInfo = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .subresourceRange = ssr,
+            .format = swapFormat,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .image = *frames[i].pImage,
+        };
+
+        r = vkCreateImageView(device, &imageViewInfo, NULL, &frames[i].imageView);
+        assert( VK_SUCCESS == r );
+
         const VkFramebufferCreateInfo ci = {
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
             .layers = 1,
@@ -242,13 +244,9 @@ static void initFrameBuffers(void)
             .pAttachments = &frames[i].imageView,
         };
 
-        frames[i].pRenderPass = &swapchainRenderPass;
-
         r = vkCreateFramebuffer(device, &ci, NULL, &frames[i].frameBuffer);
         assert( VK_SUCCESS == r );
     }
-
-    initOffscreenFrameBuffer();
 }
 
 void r_Init(void)
@@ -256,6 +254,7 @@ void r_Init(void)
     initRenderPasses();
     initFrames();
     initFrameBuffers();
+    initOffscreenFrameBuffer();
     initDescriptorSets();
     initDescriptors();
     initPipelines();
@@ -316,8 +315,21 @@ void r_PresentFrame(void)
     };
 
     res = vkQueuePresentKHR(presentQueue, &info);
-    assert( VK_SUCCESS == r );
-    assert( VK_SUCCESS == res );
+    if (res == VK_SUCCESS)
+        return;
+    printf("Present failed. Code: %d\n", res);
+    if (res == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        v_RecreateSwapChain();
+        for (int i = 0; i < FRAME_COUNT; ++i) 
+        {
+            vkDestroyFramebuffer(device, frames[i].frameBuffer, NULL);
+            vkDestroyFramebuffer(device, frames[i].imageView, NULL);
+        }
+        initFrameBuffers();
+    }
+    assert( VK_SUCCESS <= r );
+    assert( VK_SUCCESS <= res );
 }
 
 void r_CleanUp(void)
