@@ -7,6 +7,9 @@
 
 D_XcbWindow d_XcbWindow;
 
+#define WINDOW_CLASS "floating\0floating\0"
+static const int windowClassLen = sizeof(WINDOW_CLASS);
+
 static const char* windowName = "floating";
 
 void d_Init(void)
@@ -61,7 +64,7 @@ void d_Init(void)
             XCB_PROP_MODE_REPLACE, 
             d_XcbWindow.window, 
             XCB_ATOM_WM_CLASS, 
-            XCB_ATOM_STRING, 8, strlen(windowName), windowName);
+            XCB_ATOM_STRING, 8, windowClassLen, WINDOW_CLASS);
 
     xcb_map_window(d_XcbWindow.connection, d_XcbWindow.window);
     //xcb_flush(d_XcbWindow.connection);

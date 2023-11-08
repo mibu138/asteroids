@@ -320,6 +320,7 @@ void r_PresentFrame(void)
     printf("Present failed. Code: %d\n", res);
     if (res == VK_ERROR_OUT_OF_DATE_KHR)
     {
+        vkDeviceWaitIdle(device);
         v_RecreateSwapChain();
         for (int i = 0; i < FRAME_COUNT; ++i) 
         {
@@ -327,6 +328,7 @@ void r_PresentFrame(void)
             vkDestroyFramebuffer(device, frames[i].imageView, NULL);
         }
         initFrameBuffers();
+        return;
     }
     assert( VK_SUCCESS <= r );
     assert( VK_SUCCESS <= res );
