@@ -6,13 +6,13 @@ The reason for this project was to see if I could create a working game with a m
 
 You should be able to grab anything missing from your system package manager.
 
-The game features a single space ship, a proceduarally generated asteroid field, a rudimentary space physics engine, and infinite ammo.
+The game features a single space ship, a procedurally generated asteroid field, a rudimentary space physics engine, and infinite ammo.
 
-Once I got past the proof of concept stage my interest drifted to other project, but one day I would like to finish this one off.
+Once I got past the proof of concept stage my interest drifted to other projects, but one day I would like to finish this one off.
 
 Remaining things to do are:
-    - handle collisions with asterioids / make space ship damageable
-    - add a score / scoreboard
+- handle collisions with asteroids / make space ship damageable
+- add a score / scoreboard
 
 To build:
 If you have the dependencies, you should be able to just run
