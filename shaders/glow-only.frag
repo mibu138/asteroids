@@ -2,7 +2,7 @@
 
 layout(location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 0) uniform sampler2D inTex;
+layout(set = 0, binding = 0) uniform image2D inTex;
 
 #define KERN_SIZE 49
 #define KERN_WIDTH 24
@@ -70,15 +70,15 @@ vec2 quantized(vec2 uv)
 
 void main()
 {
-    vec2 uv =  gl_FragCoord.xy; // this works because our sampler is set to use unnormalizedCoordinates
+    ivec2 uv =  ivec2(gl_FragCoord.xy); // this works because our sampler is set to use unnormalizedCoordinates
     vec4 baseColor = vec4(0, 0, 0, 1);
     for (int i = -1 * KERN_WIDTH; i <= KERN_WIDTH; i++)
     {
         for (int j = -1 * KERN_WIDTH; j <= KERN_WIDTH; j++)
         {
-            const vec2 delta = vec2(i, j);
+            const ivec2 delta = ivec2(i, j);
             float scale = glow[(i+KERN_WIDTH) * KERN_SIZE + (j + KERN_WIDTH)];
-            vec4 c = scale * scale * scale * texture(inTex, uv + delta);
+            vec4 c = scale * scale * scale * imageLoad(inTex, uv + delta);
             if ( i != 0 || j != 0)
             {
                 //c.r = c.g = c.b;

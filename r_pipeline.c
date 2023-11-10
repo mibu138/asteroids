@@ -61,7 +61,7 @@ void initDescriptorSets(void)
     VkDescriptorSetLayoutBinding textureBinding = {
         .binding = 0,
         .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
         .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
         .pImmutableSamplers = NULL, // no one really seems to use these
     };

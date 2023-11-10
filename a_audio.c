@@ -43,6 +43,7 @@ static int waveFunction(
 
 static void initSineWave(void)
 {
+    // TODO Use public school "A" voice
     double x = 0.0;
     const double step = M_PI * 2 / A_BUFFER_SIZE;
     for (int i = 0; i < A_BUFFER_SIZE; i++) 

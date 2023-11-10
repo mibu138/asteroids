@@ -7,7 +7,7 @@
 
 D_XcbWindow d_XcbWindow;
 
-#define WINDOW_CLASS "floating\0floating\0"
+#define WINDOW_CLASS "floating\0floating"
 static const int windowClassLen = sizeof(WINDOW_CLASS);
 
 static const char* windowName = "floating";
