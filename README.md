@@ -13,3 +13,12 @@ Once I got past the proof of concept stage my interest drifted to other project,
 Remaining things to do are:
     - handle collisions with asterioids / make space ship damageable
     - add a score / scoreboard
+
+To build:
+If you have the dependencies, you should be able to just run
+
+`$ git clone https://github.com/mogjira/asteroids`
+`$ cd asteroids`
+`$ make`
+`$ ./build/as`
+
