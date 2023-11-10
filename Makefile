@@ -70,9 +70,11 @@ tags:
 	ctags -R .
 
 $(O)/$(NAME): main.c $(OBJS) $(DEPS)
+	mkdir -p $(O)
 	$(CC) $(CFLAGS) $(OBJS) $< -o $@ $(LIBS)
 
 $(O)/%.o:  %.c $(DEPS)
+	mkdir -p $(O)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(SPV)/%-vert.spv: $(GLSL)/%.vert
