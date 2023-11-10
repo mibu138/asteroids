@@ -18,8 +18,8 @@ To build:
 If you have the dependencies, you should be able to just run
 
 ```
-$ git clone https://github.com/mogjira/asteroids
-$ cd asteroids
-$ make
-$ ./build/as
+git clone https://github.com/mogjira/asteroids
+cd asteroids
+make
+./build/as
 ```
