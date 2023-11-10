@@ -1,6 +1,6 @@
 A very simple and incomplete space shooter game based on the classic arcade game of the same name.
 
-The reason for this project was to see if I could create a working game with a minimal amount of dependencies. So there is no engine, SDL, no glm. I use portaudio for the sound, and Vulkan for the visuals. Those two libraries and Linux OS running X11 should be all you need. The full list of linker flags are:
+The reason for this project was to see if I could create a working game with a minimal amount of dependencies. So there is no engine, SDL, no glm. I use portaudio for the sound, and Vulkan for the visuals. Those two libraries, a Linux OS running X11, and a C compiler should be all you need. The full list of linker flags are:
 
 `-lvulkan -lxcb -lxcb-keysyms -lm -lportaudio`
 
